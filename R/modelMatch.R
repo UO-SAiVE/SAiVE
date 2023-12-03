@@ -1,6 +1,10 @@
 #' Find machine learning models for use in {CARET}
 #'
-#'@description
+#' @author Ghislain de Laplante (gdela069@uottawa.ca or ghislain.delaplante@yukon.ca)
+#'
+#' @description
+#' `r lifecycle::badge("experimental")`
+#'
 #' As of 2023-06-15, there are 238 different machine learning models which can be used with the CARET package. As evaluating model performance is time consuming, selecting a subset of models to test prior to deciding on which model to use is essential. This function aims to facilitate this process by matching models according to their Jaccard similarity, in a process inspired by [this section](https://topepo.github.io/caret/models-clustered-by-tag-similarity.html) in the {CARET} e-book. Model data is fetched from [here](https://topepo.github.io/caret/tag_data.csv). The result of this function can then be passed to [spatPredict()] to further refine model selection.
 #'
 #' @details

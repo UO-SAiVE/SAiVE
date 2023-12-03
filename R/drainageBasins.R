@@ -1,5 +1,7 @@
 #' Watershed/basin delineation
 #'
+#' @author Ghislain de Laplante (gdela069@uottawa.ca or ghislain.delaplante@yukon.ca)
+#'
 #' @description
 #' `r lifecycle::badge("experimental")`
 #'

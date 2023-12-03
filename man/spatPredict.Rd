@@ -2,7 +2,7 @@
 % Please edit documentation in R/spatPredict.R
 \name{spatPredict}
 \alias{spatPredict}
-\title{Prediction of spatial variables}
+\title{Predict spatial variables using machine learning}
 \usage{
 spatPredict(
   features,
@@ -36,6 +36,8 @@ spatPredict(
 A list with three to five elements: the outcome of the VSURF variable selection process, details of the fitted model, model performance statistics, model performance comparison (if methods includes more than one model), and the final predicted raster (if predict = TRUE). If applicable, the predicted raster is written to disk.
 }
 \description{
+\ifelse{html}{\href{https://lifecycle.r-lib.org/articles/stages.html#experimental}{\figure{lifecycle-experimental.svg}{options: alt='[Experimental]'}}}{\strong{[Experimental]}}
+
 Function to facilitate the prediction of spatial variables using machine learning, including the selection of a particular model and/or model parameters from several user-defined options. Both classification and regression is supported, though please ensure that the models passed to the parameter \code{methods} are suitable.
 
 Note that you may need to acquiesce to installing supplementary packages, depending on the model types chosen and whether or not these have been run before; this function may not be 'set and forget'.
@@ -56,3 +58,6 @@ Method for selecting the best model:
 TO BE FILLED IN
 }
 
+\author{
+Ghislain de Laplante (gdela069@uottawa.ca or ghislain.delaplante@yukon.ca)
+}

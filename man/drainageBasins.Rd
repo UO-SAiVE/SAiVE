@@ -80,3 +80,6 @@ Be aware that this part of the function should ideally be used with a "simplifie
 \seealso{
 \code{\link[=WSC_drainages]{WSC_drainages()}} if looking for drainages associated with a WSC monitoring location.
 }
+\author{
+Ghislain de Laplante (gdela069@uottawa.ca or ghislain.delaplante@yukon.ca)
+}

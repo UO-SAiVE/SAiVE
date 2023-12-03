@@ -1,6 +1,10 @@
-#' Prediction of spatial variables
+#' Predict spatial variables using machine learning
+#'
+#' @author Ghislain de Laplante (gdela069@uottawa.ca or ghislain.delaplante@yukon.ca)
 #'
 #' @description
+#' `r lifecycle::badge("experimental")`
+#'
 #' Function to facilitate the prediction of spatial variables using machine learning, including the selection of a particular model and/or model parameters from several user-defined options. Both classification and regression is supported, though please ensure that the models passed to the parameter `methods` are suitable.
 #'
 #' Note that you may need to acquiesce to installing supplementary packages, depending on the model types chosen and whether or not these have been run before; this function may not be 'set and forget'.

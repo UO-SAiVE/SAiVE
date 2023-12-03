@@ -17,8 +17,13 @@ modelMatch(model, type = "match", similarity = 0.7)
 A data.frame of models meeting the requested similarity threshold along with the model abbreviations that can be passed to \code{\link[caret:train]{caret::train()}} or to function \code{\link[=spatPredict]{spatPredict()}}.
 }
 \description{
+\ifelse{html}{\href{https://lifecycle.r-lib.org/articles/stages.html#experimental}{\figure{lifecycle-experimental.svg}{options: alt='[Experimental]'}}}{\strong{[Experimental]}}
+
 As of 2023-06-15, there are 238 different machine learning models which can be used with the CARET package. As evaluating model performance is time consuming, selecting a subset of models to test prior to deciding on which model to use is essential. This function aims to facilitate this process by matching models according to their Jaccard similarity, in a process inspired by \href{https://topepo.github.io/caret/models-clustered-by-tag-similarity.html}{this section} in the {CARET} e-book. Model data is fetched from \href{https://topepo.github.io/caret/tag_data.csv}{here}. The result of this function can then be passed to \code{\link[=spatPredict]{spatPredict()}} to further refine model selection.
 }
 \details{
 This function requires internet access to get an up-to-date list of models.
+}
+\author{
+Ghislain de Laplante (gdela069@uottawa.ca or ghislain.delaplante@yukon.ca)
 }
