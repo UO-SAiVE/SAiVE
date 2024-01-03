@@ -68,7 +68,7 @@ drainageBasins <- function(DEM, streams = NULL, breach_dist = 10000, threshold =
     }
   }
 
-  #Check whitebox existence and version, install if necessary or if force_update_wbt = TRUE.
+  #Check whitebox binaries existence and version, install if necessary or if force_update_wbt = TRUE.
   wbt_check <- whitebox::check_whitebox_binary()
   if (wbt_check){
     version <- invisible(utils::capture.output(whitebox::wbt_version()))
@@ -80,12 +80,12 @@ drainageBasins <- function(DEM, streams = NULL, breach_dist = 10000, threshold =
     print(paste0("Installed WhiteboxTools version ", substr(version[1], 16, 20)))
   }
   if (force_update_wbt) {
-    whitebox::wbt_install()
+    whitebox::wbt_install(force = TRUE)
     version <- whitebox::wbt_version()
     print(paste0("Installed WhiteboxTools version ", substr(version[1], 16, 20), " (force update)."))
   }
 
-  #change terra options
+  #change terra options to allow greater RAM fraction use
   old <- terra::terraOptions(print = FALSE)
   terra::terraOptions(memfrac = 0.9)
   on.exit(terra::terraOptions(memfrac = old$memfrac))
@@ -103,6 +103,7 @@ drainageBasins <- function(DEM, streams = NULL, breach_dist = 10000, threshold =
     DEM <- terra::rast(DEM) #load the DEM to R environment
     points <- terra::project(points, DEM)
     suppressWarnings(dir.create(paste0(tempdir(), "/temp_inputs")))
+    suppressWarnings(unlink(paste0(tempdir(), "/temp_inputs"), recursive = TRUE, force = TRUE))
     terra::writeVector(points, paste0(tempdir(), "/temp_inputs/points.shp"), overwrite=TRUE)
   }
 
@@ -139,47 +140,25 @@ drainageBasins <- function(DEM, streams = NULL, breach_dist = 10000, threshold =
   if (!streams_derived_exists | !d8pntr_exists | !d8fac_exists | overwrite){
     print("Caculating layers derived from the DEM as they are either missing, have different extents as the provided DEM, you've requested an overwrite of calculated layers, or you specified a streams shapefile.")
 
-    print("Filling single-cell pits in the DEM...")
-    whitebox::wbt_fill_single_cell_pits(dem = input_DEM,
-                                        output = paste0(directory, "/filled_single_cells.tif"))
+    hydroProcess(DEM = input_DEM, breach_dist = breach_dist, streams = streams, save_path = directory)
 
-    if (!is.null(streams)){ #load streams, process to raster, and burn-in the DEM
-      print("Creating a stream raster from the provided stream shapefile...")
-      streams_input <- terra::vect(streams)
-      streams_input <- terra::project(streams_input, DEM)
-      streams_input <- terra::rasterize(streams_input, DEM, touches = TRUE, filename = paste0(tempdir(), "/temp_inputs/streams_input_rasterized.tif"), overwrite=TRUE) #Make raster stream network. Background has values NA. Write to disk to avoid memory restrictions.
-      streams_input <- (streams_input/streams_input) * 20 #Make each cell value = 20 to later burn in a 20 meter depression
-      streams_input <- terra::subst(streams_input, NA, 0) #replace background NAs with 0 so that it subtracts (nothing) from the DEM later; subtracting NA results in NA cells.
-      print("Creating depressions in the DEM where streams should be...")
-      filled_single_cells <- terra::rast(paste0(directory, "/filled_single_cells.tif"))
-      DEM_burned <- filled_single_cells - streams_input #burn-in the DEM
-      terra::writeRaster(DEM_burned, paste0(directory, "/DEM_burned.tif"), overwrite = TRUE)
-    }
-
-    print("Breaching depressions in the DEM to ensure continuous flow paths...")
-    whitebox::wbt_breach_depressions_least_cost(
-      dem = if (!is.null(streams)) paste0(directory, "/DEM_burned.tif") else paste0 (directory, "/filled_single_cells.tif"),
-      output = paste0(directory, "/FilledDEM.tif"),
-      dist = breach_dist,
-      fill = TRUE,
-      flat_increment = 0.0001)
-
-    print("Calculating a flow accumulation raster...")
-    whitebox::wbt_d8_flow_accumulation(input = paste0(directory, "/FilledDEM.tif"),
-                                       output = paste0(directory, "/D8fac.tif"))
-    d8fac <- terra::rast(paste0(directory, "/D8fac.tif"))
-
-    print("Calculating a flow directions raster...")
-    whitebox::wbt_d8_pointer(dem = paste0(directory, "/FilledDEM.tif"),
-                             output = paste0(directory, "/D8pointer.tif"))
-    d8pntr <- terra::rast(paste0(directory, "/D8pointer.tif"))
-
-    # Make a raster of streams only from the DEM, with a threshold (in cells) for flow accumulation
-    print("Creating a raster of streams based on the flow accumulation raster...")
-    whitebox::wbt_extract_streams(flow_accum = paste0(directory, "/D8fac.tif"),
-                                  output = paste0(directory, "/streams_derived.tif"),
-                                  threshold = threshold)
-    streams_derived <- terra::rast(paste0(directory, "/streams_derived.tif"))
+    createStreams(DEM = , threshold = threshold, save_path = directory)
+    # print("Calculating a flow accumulation raster...")
+    # whitebox::wbt_d8_flow_accumulation(input = paste0(directory, "/FilledDEM.tif"),
+    #                                    output = paste0(directory, "/D8fac.tif"))
+    # d8fac <- terra::rast(paste0(directory, "/D8fac.tif"))
+    #
+    # print("Calculating a flow directions raster...")
+    # whitebox::wbt_d8_pointer(dem = paste0(directory, "/FilledDEM.tif"),
+    #                          output = paste0(directory, "/D8pointer.tif"))
+    # d8pntr <- terra::rast(paste0(directory, "/D8pointer.tif"))
+    #
+    # # Make a raster of streams only from the DEM, with a threshold (in cells) for flow accumulation
+    # print("Creating a raster of streams based on the flow accumulation raster...")
+    # whitebox::wbt_extract_streams(flow_accum = paste0(directory, "/D8fac.tif"),
+    #                               output = paste0(directory, "/streams_derived.tif"),
+    #                               threshold = threshold)
+    # streams_derived <- terra::rast(paste0(directory, "/streams_derived.tif"))
   } else {
     if (!is.null(streams)){
       print("Using pre-calculated derived layers for basin delineation. NOTE: you specified a streams shapefile which won't be used. If you want to incorporate it run this function again with overwrite = TRUE.")
