@@ -7,11 +7,11 @@
 createStreams(DEM, threshold, vector = NULL, save_path = NULL)
 }
 \arguments{
-\item{DEM}{The path to a digital elevation model .tif file.}
+\item{DEM}{The path to a digital elevation model file, with .tif extension.}
 
 \item{threshold}{The accumulation threshold in DEM cells necessary to start defining a stream.}
 
-\item{vector}{NULL for no vector file, "gpkg" for a geopackage file, "shp" for a shapefile.}
+\item{vector}{Output file specifications. NULL for no vector file, "gpkg" for a geopackage file, "shp" for a shapefile.}
 
 \item{save_path}{An optional path in which to save the newly created stream network. If left NULL will save it in the same directory as the provided DEM.}
 }

@@ -19,6 +19,8 @@ hydroProcess(
 
 \item{streams}{Optionally, the path to the polylines shapefile or geopackage file containing streams, which can be used to improve hydrological accuracy when using poor quality DEMs and decent accuracy stream networks.}
 
+\item{burn_dist}{The number of units (meters, feet) to use for burning-in the stream network.}
+
 \item{save_path}{An optional path in which to save the processed DEM. If left NULL will save it in the same directory as the provided DEM.}
 }
 \value{

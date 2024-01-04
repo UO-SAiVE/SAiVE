@@ -21,7 +21,7 @@
 modelMatch <- function(model, type = "match", similarity = 0.7)
 {
 
-  tag_data <- read.csv("https://topepo.github.io/caret/tag_data.csv", row.names = 1)
+  tag_data <- utils::read.csv("https://topepo.github.io/caret/tag_data.csv", row.names = 1)
   model_names <- data.frame(names = rownames(tag_data),
                             abbreviations = gsub(".*\\((.*)\\).*", "\\1", rownames(tag_data)))
   if (!(model %in% model_names$abbreviations)) {

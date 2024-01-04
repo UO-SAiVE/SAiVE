@@ -77,9 +77,6 @@ Starting from a supplied DEM, the function will fill single-cell pits, burn-in a
 Be aware that this part of the function should ideally be used with a "simplified" streams shapefile. In particular, avoid or pre-process stream shapefiles that represent side-channels, as these will burn-in several parallel tracks to the DEM. ESRI has a tool called "simplify hydrology lines" which is great if you can ever get it to work, and WhiteboxTools has functions \code{\link[whitebox:wbt_remove_short_streams]{whitebox::wbt_remove_short_streams()}} to trim the streams raster, and \code{\link[whitebox:wbt_repair_stream_vector_topology]{whitebox::wbt_repair_stream_vector_topology()}} to help in converting a corrected streams vector to raster in the first place.
 }
 }
-\seealso{
-\code{\link[=WSC_drainages]{WSC_drainages()}} if looking for drainages associated with a WSC monitoring location.
-}
 \author{
 Ghislain de Laplante (gdela069@uottawa.ca or ghislain.delaplante@yukon.ca)
 }

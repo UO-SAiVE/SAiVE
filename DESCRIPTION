@@ -1,6 +1,6 @@
 Package: SAiVE
 Title: Functions useful for SAiVE group research, collaborations, and
-    publications.
+    publications
 Version: 0.0.0.9000
 Authors@R: person("Ghislain", "de Laplante", , "ghislain.delaplante@yukon.ca", role = c("aut", "cre"),
            comment = c(ORCID = "0000-0002-5093-9185"))
@@ -9,13 +9,12 @@ Description: Holds functions useful for SAiVE group research,
     facilitates the re-use and re-purposing of code, fosters good code
     writing practices, and can allow others to benefit from the
     work done by the SAiVE group.
-License: AGPL (>= 3)
+License: AGPL (>= 3) + file LICENSE
 Imports: 
     caret,
     crayon,
     doParallel,
     lattice,
-    magrittr,
     parallel,
     proxy,
     rlang,
