@@ -43,7 +43,7 @@ spatPredict <- function(features, outcome, trainControl, methods, fastCompare = 
   set.seed(123) #set seed so that results will be reproducible later
   if (predict){
     if (tolower(save_path) == "choose") {
-      print("Select the output folder for shapefiles...")
+      message("Select the output folder for shapefiles...")
       save_path <- as.character(utils::choose.dir(caption="Select Save Folder"))
     } else {
       if (!dir.exists(save_path)){

@@ -1,40 +1,62 @@
 #' Create stream network from DEM
 #'
-#' @param DEM The path to a digital elevation model file, with .tif extension.
+#' @param DEM The path to a digital elevation model file with .tif extension, or a {terra} spatRaster object. It is usually advisable to have already hydro-processed the DEM to remove artificial depressions. See [hydroProcess()].
 #' @param threshold The accumulation threshold in DEM cells necessary to start defining a stream.
-#' @param vector Output file specifications. NULL for no vector file, "gpkg" for a geopackage file, "shp" for a shapefile.
-#' @param save_path An optional path in which to save the newly created stream network. If left NULL will save it in the same directory as the provided DEM.
+#' @param vector Output file specifications. NULL for no vector file saved to disk, "gpkg" for a geopackage file, "shp" for a shapefile.
+#' @param save_path An optional path in which to save the newly created stream network. If left NULL will save it in the same directory as the provided DEM or, if the DEM is a {terra} object, return only {terra} objects.
 #'
-#' @return A raster representation of streams and, if requested, a vector representation of streams. Returned as {terra} objects and saved to disk.
+#' @return A raster representation of streams and, if requested, a vector representation of streams. Returned as {terra} objects and saved to disk if `save_path` is not null.
 #' @export
 #'
 
 createStreams <- function(DEM, threshold, vector = NULL, save_path = NULL){
 
-  directory <- if (is.null(save_path)) dirname(DEM) else save_path
-  temp_dir <- paste0(tempdir(), "/createStreams")
-  suppressWarnings(dir.create(temp_dir))
-  suppressWarnings(unlink(temp_dir, recursive = TRUE, force = TRUE))
-  dem_path <- DEM
-  DEM <- terra::rast(dem_path)
+  if (inherits(DEM, "SpatRaster")){
+    temp_dir <- paste0(tempdir(), "/createStreams")
+    suppressWarnings(dir.create(temp_dir))
+    suppressWarnings(unlink(list.files(temp_dir, full.names=TRUE), recursive = TRUE, force = TRUE))
+    terra::writeRaster(DEM, paste0(temp_dir, "/rast.tif"))
+    dem_path <- paste0(temp_dir, "/rast.tif")
+    directory <- temp_dir
+  } else if (inherits(DEM, "character")){
+    directory <- if (is.null(save_path)) dirname(DEM) else save_path
+    temp_dir <- paste0(tempdir(), "/createStreams")
+    suppressWarnings(dir.create(temp_dir))
+    suppressWarnings(unlink(temp_dir, recursive = TRUE, force = TRUE))
+    dem_path <- DEM
+    DEM <- terra::rast(dem_path)
+  } else {
+    stop("Parameter DEM must be either a terra SpatRaster or a path to a raster.")
+  }
 
-  print("Calculating a flow accumulation raster...")
+  message("Calculating a flow accumulation raster...")
   whitebox::wbt_d8_flow_accumulation(input = dem_path,
                                      output = paste0(directory, "/D8fac.tif"))
   d8fac <- terra::rast(paste0(directory, "/D8fac.tif"))
 
-  print("Calculating a flow directions raster...")
+  message("Calculating a flow directions raster...")
   whitebox::wbt_d8_pointer(dem = dem_path,
                            output = paste0(directory, "/D8pointer.tif"))
   d8pntr <- terra::rast(paste0(directory, "/D8pointer.tif"))
 
   # Make a raster of streams only from the DEM, with a threshold (in cells) for flow accumulation
-  print("Creating a raster of streams based on the flow accumulation raster...")
+  message("Creating a raster of streams based on the flow accumulation raster...")
   whitebox::wbt_extract_streams(flow_accum = paste0(directory, "/D8fac.tif"),
                                 output = paste0(directory, "/streams_derived.tif"),
                                 threshold = threshold)
   streams_derived <- terra::rast(paste0(directory, "/streams_derived.tif"))
 
-  return(list(flow_accum=d8fac, flow_dir=d8pntr, streams_derived=streams_derived))
+
+  streams_vector <- terra::as.lines(streams_derived)
+  if (!is.null(vector)){
+    if (vector == "shp" & !is.null(save_path)){
+      terra::writeVector(streams_vector, paste0(directory, "/streams_vector.shp"))
+    } else if (vector == "gpkg" & !is.null(save_path)){
+      terra::writeVector(streams_vector, paste0(directory, "/streams_vector.gpkg"))
+    }
+  }
+
+
+  return(list(flow_accum=d8fac, flow_dir=d8pntr, streams_derived=streams_derived, streams_vector=streams_vector))
 }
 

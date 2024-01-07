@@ -1,0 +1,14 @@
+<PAMDataset>
+  <SRS dataAxisToSRSAxisMapping="1,2,3">COMPD_CS["NAD83(CSRS) / Yukon Albers + CGVD28 height",PROJCS["NAD83(CSRS) / Yukon Albers",GEOGCS["NAD83(CSRS)",DATUM["NAD83_Canadian_Spatial_Reference_System",SPHEROID["GRS 1980",6378137,298.257222101004]],PRIMEM["Greenwich",0],UNIT["degree",0.0174532925199433,AUTHORITY["EPSG","9122"]],AUTHORITY["EPSG","4617"]],PROJECTION["Albers_Conic_Equal_Area"],PARAMETER["latitude_of_center",59],PARAMETER["longitude_of_center",-132.5],PARAMETER["standard_parallel_1",61.6666666666667],PARAMETER["standard_parallel_2",68],PARAMETER["false_easting",500000],PARAMETER["false_northing",500000],UNIT["metre",1],AXIS["Easting",EAST],AXIS["Northing",NORTH],AUTHORITY["EPSG","3579"]],VERT_CS["CGVD28 height",VERT_DATUM["Canadian Geodetic Vertical Datum of 1928",2005],UNIT["metre",1],AXIS["Gravity-related height",UP],AUTHORITY["EPSG","5713"]]]</SRS>
+  <GeoTransform>  1.5813379019924335e+05,  1.6940240085223625e+01,  0.0000000000000000e+00,  9.6287159739685443e+05,  0.0000000000000000e+00, -1.6940240085223557e+01</GeoTransform>
+  <PAMRasterBand band="1">
+    <Description>basin_test_rast</Description>
+    <NoDataValue le_hex_equiv="000000000000F87F">nan</NoDataValue>
+    <Metadata>
+      <MDI key="STATISTICS_MAXIMUM">1297</MDI>
+      <MDI key="STATISTICS_MEAN">-9999</MDI>
+      <MDI key="STATISTICS_MINIMUM">427</MDI>
+      <MDI key="STATISTICS_STDDEV">-9999</MDI>
+    </Metadata>
+  </PAMRasterBand>
+</PAMDataset>
