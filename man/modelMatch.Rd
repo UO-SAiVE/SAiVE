@@ -7,7 +7,7 @@
 modelMatch(model, type = "match", similarity = 0.7)
 }
 \arguments{
-\item{model}{The abbreviation or short name of the model you'd like to match.}
+\item{model}{The abbreviation or short name of the model you'd like to match, taken from \href{https://topepo.github.io/caret/available-models.html}{here}.}
 
 \item{type}{The type of model. You can match the input \code{model} type with "match", or select from dual-purpose models ("dual"), regression models only ("regression"), or classification models only ("classification").}
 

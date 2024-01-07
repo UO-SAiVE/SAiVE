@@ -10,7 +10,7 @@
 #' @details
 #' This function requires internet access to get an up-to-date list of models.
 #'
-#' @param model The abbreviation or short name of the model you'd like to match, taken from [here] (https://topepo.github.io/caret/available-models.html).
+#' @param model The abbreviation or short name of the model you'd like to match, taken from [here](https://topepo.github.io/caret/available-models.html).
 #' @param type The type of model. You can match the input `model` type with "match", or select from dual-purpose models ("dual"), regression models only ("regression"), or classification models only ("classification").
 #' @param similarity The similarity threshold to use as a numeric value from 0 to 1. Models with a similarity score greater than this will be returned.
 #'

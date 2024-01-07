@@ -1,5 +1,5 @@
 Package: SAiVE
-Title: Functions useful for SAiVE group research, collaborations, and
+Title: Functions Used For SAiVE roup research, collaborations, and
     publications
 Version: 0.0.0.9000
 Authors@R: person("Ghislain", "de Laplante", , "ghislain.delaplante@yukon.ca", role = c("aut", "cre"),
@@ -24,7 +24,8 @@ Imports:
     VSURF,
     whitebox
 Suggests: 
-    testthat (>= 3.0.0)
+    testthat (>= 3.0.0),
+    vdiffr
 Config/testthat/edition: 3
 Encoding: UTF-8
 Roxygen: list(markdown = TRUE)

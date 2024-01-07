@@ -13,18 +13,18 @@ hydroProcess(
 )
 }
 \arguments{
-\item{DEM}{The path to a DEM including extension from which to delineate watersheds/catchments. Must be in .tif format. Derived layers such as flow accumulation, flow direction, and streams will inherit the DEM coordinate reference system.}
+\item{DEM}{The path to a digital elevation model file with .tif extension, or a {terra} spatRaster object.}
 
 \item{breach_dist}{The max radius (in raster cells) in which to search for a path to breach depressions, passed to \code{\link[whitebox:wbt_breach_depressions_least_cost]{whitebox::wbt_breach_depressions_least_cost()}}. This value should be high to ensure all depressions are breached, keeping in mind that greater distance = greater computing time. Note that the DEM is \emph{not} breached in order of lowest elevation to greatest, nor is it breached sequentially (order is unknown, but the raster is presumably searched in some grid pattern for depressions). This means that flow paths may need to cross multiple depressions, especially in low relief areas.}
 
-\item{streams}{Optionally, the path to the polylines shapefile or geopackage file containing streams, which can be used to improve hydrological accuracy when using poor quality DEMs and decent accuracy stream networks.}
+\item{streams}{Optionally, the path to the polylines shapefile or geopackage file containing streams, which can be used to improve hydrological accuracy when using poor quality DEMs but decent accuracy stream networks.}
 
-\item{burn_dist}{The number of units (meters, feet) to use for burning-in the stream network.}
+\item{burn_dist}{The number of units (in DEM units) to use for burning-in the stream network.}
 
-\item{save_path}{An optional path in which to save the processed DEM. If left NULL will save it in the same directory as the provided DEM.}
+\item{save_path}{An optional path in which to save the processed DEM. If left NULL will save it in the same directory as the provided DEM or, if the DEM is a {terra} object, return only {terra} objects.}
 }
 \value{
-A hydro-processed DEM as a {terra} object and a .tif file saved to disk.
+A hydro-processed DEM returned as a {terra} object and saved to disk if \code{save_path} is not null.
 }
 \description{
 Takes a digital elevation model and prepares it for hydrological analyses, such as basin delineation. Modifies the input DEM by breaching single cell pits/depressions and then breaching remaining depressions using a least cost algorithm (where cost is a function of distance plus elevation change to the DEM).

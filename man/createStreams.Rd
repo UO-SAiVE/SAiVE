@@ -7,16 +7,16 @@
 createStreams(DEM, threshold, vector = NULL, save_path = NULL)
 }
 \arguments{
-\item{DEM}{The path to a digital elevation model file, with .tif extension.}
+\item{DEM}{The path to a digital elevation model file with .tif extension, or a {terra} spatRaster object. It is usually advisable to have already hydro-processed the DEM to remove artificial depressions. See \code{\link[=hydroProcess]{hydroProcess()}}.}
 
 \item{threshold}{The accumulation threshold in DEM cells necessary to start defining a stream.}
 
-\item{vector}{Output file specifications. NULL for no vector file, "gpkg" for a geopackage file, "shp" for a shapefile.}
+\item{vector}{Output file specifications. NULL for no vector file saved to disk, "gpkg" for a geopackage file, "shp" for a shapefile.}
 
-\item{save_path}{An optional path in which to save the newly created stream network. If left NULL will save it in the same directory as the provided DEM.}
+\item{save_path}{An optional path in which to save the newly created stream network. If left NULL will save it in the same directory as the provided DEM or, if the DEM is a {terra} object, return only {terra} objects.}
 }
 \value{
-A raster representation of streams and, if requested, a vector representation of streams. Returned as {terra} objects and saved to disk.
+A raster representation of streams and, if requested, a vector representation of streams. Returned as {terra} objects and saved to disk if \code{save_path} is not null.
 }
 \description{
 Create stream network from DEM
