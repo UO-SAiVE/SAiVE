@@ -25,11 +25,11 @@
 #'
 #' @param features Independent variables. Must be either a NAMED list of {terra} spatRasters or a multi-layer (stacked) spatRaster. All layers must all have the same cell size, alignment, extent, and crs. These rasters can include the training extent as well as the desired extrapolation extent.
 #' @param outcome Dependent variable, as a {terra} spatVector of points with a single attribute table column (of class integer, numeric or factor). The class of this column dictates whether the problem is approached as a classification or regression problem.
-#' @param trainControl Parameters used to control training of the machine learning model, created with [caret::trainControl()]. Passed to the `trControl` parameter of [caret::train()]. If specifying multiple model types in `methods` you can use a single `trainControl` which will apply to all `methods`, or multiple variations can be passed to this argument as a list with names matching the names of `methods` (one element for each model specified in methods).
+#' @param trainControl Parameters used to control training of the machine learning model, created with [caret::trainControl()]. Passed to the `trControl` parameter of [caret::train()]. If specifying multiple model types in `methods` you can use a single `trainControl` which will apply to all `methods`, or pass multiple variations to this argument as a list with names matching the names of `methods` (one element for each model specified in methods).
 #' @param methods A string specifying one or more classification/regression model(s) to use. Passed to the `method` parameter of [caret::train()]. If specifying more than one method they will all be passed to [caret::resamples()] to compare model performance. Then, if `predict = TRUE`, the model with the highest accuracy will be selected to predict the raster surface across the exent of `features`. A different `trainControl` parameter can be used for each model in `methods`.
 #' @param fastCompare If specifying multiple model types in `methods` or one model with multiple different `trainControl` objects, should the points in `outcome` be sub-sampled for the model comparison step? The selected model will be trained on the full `outcome` data set after selection. TRUE/FALSE.
 #' @param thinFeatures Should random forest selection using [VSURF::VSURF()] be used in an attempt to remove irrelevant variables?
-#' @param predict TRUE will apply the selected model to the full extent of `features` and return a raster, saved to `save_path`.
+#' @param predict TRUE will apply the selected model to the full extent of `features` and return a raster saved to `save_path`.
 #' @param save_path The path (folder) to which you wish to save the predicted raster. Default "choose" lets you choose interactively. Not used unless `predict = TRUE`. If you don't want to save anywhere permanent point to the temp directory using tempdir().
 #'
 #' @return A list with three to five elements: the outcome of the VSURF variable selection process, details of the fitted model, model performance statistics, model performance comparison (if methods includes more than one model), and the final predicted raster (if predict = TRUE). If applicable, the predicted raster is written to disk.
@@ -118,14 +118,14 @@ spatPredict <- function(features, outcome, trainControl, methods, fastCompare = 
           results$VSURF_outcome$Retained[i] <- FALSE
         }
       }
-      TrainingData <- TrainingData[, c(1,(VSURF.result$varselect.pred) +1)] #Subset using the final VSURF results
+      TrainingData <- TrainingData[, c(1,(VSURF.result$varselect.pred) + 1)] #Subset using the final VSURF results
     }, warning = function(w){
       ordered.selected <- names(TrainingDataFrame[,2:ncol(TrainingDataFrame)])[VSURF.result$varselect.thres]
       ordered.importance <- VSURF.result$imp.varselect.thres
       results$VSURF_outcome <<- data.frame(Feature = ordered.selected,
                                            Importance = ordered.importance,
                                            Retained = TRUE)
-      TrainingData <<- TrainingData[, c(1,(VSURF.result$varselect.interp) +1)] #Subset using the outcome of the interpretation step. Prediction step did not run since interpretation did not eliminate any variables.
+      TrainingData <<- TrainingData[, c(1,(VSURF.result$varselect.interp) + 1)] #Subset using the outcome of the interpretation step. Prediction step did not run since interpretation did not eliminate any variables.
     }, error = function(e){
       warning("Failed to run VSURF algorithm to thin features. Proceeding to model training step with whole data set.")
     })

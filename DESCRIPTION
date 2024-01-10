@@ -2,7 +2,7 @@ Package: SAiVE
 Title: Functions Used For SAiVE roup research, collaborations, and
     publications
 Version: 0.0.0.9000
-Authors@R: person("Ghislain", "de Laplante", , "ghislain.delaplante@yukon.ca", role = c("aut", "cre"),
+Authors@R: person("Ghislain", "de Laplante", , "ghislain.delaplante@yukon.ca", role = c("aut", "cre", "cph"),
            comment = c(ORCID = "0000-0002-5093-9185"))
 Description: Holds functions useful for SAiVE group research,
     collaboration, and publication in an R package format. This
@@ -22,10 +22,10 @@ Imports:
     terra,
     utils,
     VSURF,
-    whitebox
 Suggests: 
     testthat (>= 3.0.0),
-    vdiffr
+    vdiffr,
+    whitebox
 Config/testthat/edition: 3
 Encoding: UTF-8
 Roxygen: list(markdown = TRUE)

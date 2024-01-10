@@ -20,7 +20,7 @@ spatPredict(
 
 \item{outcome}{Dependent variable, as a {terra} spatVector of points with a single attribute table column (of class integer, numeric or factor). The class of this column dictates whether the problem is approached as a classification or regression problem.}
 
-\item{trainControl}{Parameters used to control training of the machine learning model, created with \code{\link[caret:trainControl]{caret::trainControl()}}. Passed to the \code{trControl} parameter of \code{\link[caret:train]{caret::train()}}. If specifying multiple model types in \code{methods} you can use a single \code{trainControl} which will apply to all \code{methods}, or multiple variations can be passed to this argument as a list with names matching the names of \code{methods} (one element for each model specified in methods).}
+\item{trainControl}{Parameters used to control training of the machine learning model, created with \code{\link[caret:trainControl]{caret::trainControl()}}. Passed to the \code{trControl} parameter of \code{\link[caret:train]{caret::train()}}. If specifying multiple model types in \code{methods} you can use a single \code{trainControl} which will apply to all \code{methods}, or pass multiple variations to this argument as a list with names matching the names of \code{methods} (one element for each model specified in methods).}
 
 \item{methods}{A string specifying one or more classification/regression model(s) to use. Passed to the \code{method} parameter of \code{\link[caret:train]{caret::train()}}. If specifying more than one method they will all be passed to \code{\link[caret:resamples]{caret::resamples()}} to compare model performance. Then, if \code{predict = TRUE}, the model with the highest accuracy will be selected to predict the raster surface across the exent of \code{features}. A different \code{trainControl} parameter can be used for each model in \code{methods}.}
 
@@ -28,7 +28,7 @@ spatPredict(
 
 \item{thinFeatures}{Should random forest selection using \code{\link[VSURF:VSURF]{VSURF::VSURF()}} be used in an attempt to remove irrelevant variables?}
 
-\item{predict}{TRUE will apply the selected model to the full extent of \code{features} and return a raster, saved to \code{save_path}.}
+\item{predict}{TRUE will apply the selected model to the full extent of \code{features} and return a raster saved to \code{save_path}.}
 
 \item{save_path}{The path (folder) to which you wish to save the predicted raster. Default "choose" lets you choose interactively. Not used unless \code{predict = TRUE}. If you don't want to save anywhere permanent point to the temp directory using tempdir().}
 }

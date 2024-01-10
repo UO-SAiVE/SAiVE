@@ -15,3 +15,6 @@ Returns the version number of the installed binaries and (if necessary) installs
 \description{
 Checks for the existence of WhiteboxTools in its default directory and installs it if necessary or if \code{force = TRUE}.
 }
+\author{
+Ghislain de Laplante (gdela069@uottawa.ca or ghislain.delaplante@yukon.ca)
+}

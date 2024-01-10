@@ -40,7 +40,7 @@ drainageBasins(
 
 \item{snap_dist}{The search radius within which to snap points to streams. Snapping method depends on 'snap' parameter. Note that distance units will match the projection, so probably best to work on a meter grid.}
 
-\item{save_path}{The path where you want the output shapefiles saved. Default "choose" lets you choose interactively.}
+\item{save_path}{The directory path where you want the output shapefiles saved. Default "choose" lets you choose interactively.}
 
 \item{force_update_wbt}{Whitebox Tools is by default only downloaded if it cannot be found on the computer, and no check are performed to ensure the local version is current. Set to TRUE if you know that there is a new version and you would like to use it.}
 }

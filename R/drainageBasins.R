@@ -37,7 +37,7 @@
 #' @param projection Optionally, a projection string in the form "epsg:3579" (find them [here](https://epsg.io/)). The derived watersheds and point output layers will use this projection. If NULL the projection of the points will be used.
 #' @param snap Snap to the "nearest" derived (calculated) stream, or to the "greatest" flow accumulation cell within the snap distance? Beware that "greatest" will move the point downstream by up to the 'snap_dist' specified, while nearest might snap to the wrong stream.
 #' @param snap_dist The search radius within which to snap points to streams. Snapping method depends on 'snap' parameter. Note that distance units will match the projection, so probably best to work on a meter grid.
-#' @param save_path The path where you want the output shapefiles saved. Default "choose" lets you choose interactively.
+#' @param save_path The directory path where you want the output shapefiles saved. Default "choose" lets you choose interactively.
 #' @param force_update_wbt Whitebox Tools is by default only downloaded if it cannot be found on the computer, and no check are performed to ensure the local version is current. Set to TRUE if you know that there is a new version and you would like to use it.
 #'
 #' @return A list of {terra} objects. If points are specified: delineated drainages, pour points as provided, snapped pour points, and the derived streams network. If no points: flow accumulation and direction rasters, and the derived streams network. If points specified, also saved to disk: an ESRI shapefile for each drainage basin, plus the associated snapped pour point and the point as provided and a shapefiles for all basins/points together. In all cases the created or discovered rasters will be in the same folder as the DEM.
@@ -47,7 +47,9 @@
 drainageBasins <- function(DEM, streams = NULL, breach_dist = 10000, threshold = 500, overwrite = FALSE, points = NULL, points_name_col = NULL, projection = NULL, snap = "nearest", snap_dist = 200, save_path = "choose", force_update_wbt = FALSE) {
 
   #initial checks
-  rlang::check_installed("whitebox", reason = "Package whitebox is required to use function drainageBasins") #This is here because whitebox is not a 'depends' of this package; it is only necessary for this function and is therefore in "suggests"
+  rlang::check_installed("whitebox", reason = "required to use function drainageBasins") #This is here because whitebox is not a 'depends' of this package; it is only necessary for this function and is therefore in "suggests"
+  wbtCheck(force = force_update_wbt)  #Check whitebox binaries existence and version, install if necessary or if force_update_wbt = TRUE.
+
 
   if (!(snap %in% c("nearest", "greatest"))){
     stop("The parameter 'snap' must be one of 'nearest' or 'greatest'.")
@@ -67,16 +69,13 @@ drainageBasins <- function(DEM, streams = NULL, breach_dist = 10000, threshold =
     }
   }
 
-  #Check whitebox binaries existence and version, install if necessary or if force_update_wbt = TRUE.
-  wbtCheck(force = force_update_wbt)
-
   #change terra options to allow greater RAM fraction use
   old <- terra::terraOptions(print = FALSE)
   terra::terraOptions(memfrac = 0.9)
   on.exit(terra::terraOptions(memfrac = old$memfrac))
 
   if (!is.null(points)){
-    points <- terra::vect(points) #load the points
+    points <- suppressWarnings(terra::vect(points)) #load the points
     if (!(points_name_col %in% names(points))){
       stop("The column name you passed to parameter points_name_col does not appear to be in the points shapefile. If the column name had spaces, slashes, or other problematic characters, it might have been modified upon reading it in. To see what R thinks the column names are you could load the layer using names(terra::vect('path_to_your_shp')).")
     }
@@ -88,7 +87,6 @@ drainageBasins <- function(DEM, streams = NULL, breach_dist = 10000, threshold =
     DEM <- terra::rast(DEM) #load the DEM to R environment
     points <- terra::project(points, DEM)
     suppressWarnings(dir.create(paste0(tempdir(), "/temp_inputs")))
-    suppressWarnings(unlink(paste0(tempdir(), "/temp_inputs"), recursive = TRUE, force = TRUE))
     terra::writeVector(points, paste0(tempdir(), "/temp_inputs/points.shp"), overwrite=TRUE)
   }
 
@@ -117,7 +115,7 @@ drainageBasins <- function(DEM, streams = NULL, breach_dist = 10000, threshold =
           d8fac_exists <- TRUE
         }
       }
-    } else {
+    } else { #if snap == "nearest" then d8fac is not needed
       d8fac_exists <- TRUE
     }
   }
@@ -126,10 +124,13 @@ drainageBasins <- function(DEM, streams = NULL, breach_dist = 10000, threshold =
     message("Caculating layers derived from the DEM as they are either missing, have different extents as the provided DEM, you've requested an overwrite of calculated layers, or you specified a streams shapefile.")
 
     hydroProcess_output <- hydroProcess(DEM = input_DEM, breach_dist = breach_dist, streams = streams, burn_dist = 10, save_path = directory)
-    stream_outputs <- createStreams(DEM = paste0(directory, "/DEM_burned.tif"), threshold = threshold, save_path = directory)
-    d8fac = stream_outputs$flow_accum
+    stream_outputs <- createStreams(DEM = hydroProcess_output, threshold = threshold, save_path = directory)
+    d8fac <-  stream_outputs$flow_accum
     d8pntr <- stream_outputs$flow_dir
     streams_derived = stream_outputs$streams_derived
+    terra::writeRaster(streams_derived, paste0(directory, "/streams_derived.tif"), overwrite = TRUE)
+    terra::writeRaster(d8pntr, paste0(directory, "/D8pointer.tif"), overwrite = TRUE)
+    terra::writeRaster(d8fac, paste0(directory, "/D8fac.tif"), overwrite = TRUE)
   } else {
     if (!is.null(streams)){
       message("Using pre-calculated derived layers for basin delineation. NOTE: you specified a streams shapefile which won't be used. If you want to incorporate it run this function again with overwrite = TRUE.")
@@ -142,7 +143,7 @@ drainageBasins <- function(DEM, streams = NULL, breach_dist = 10000, threshold =
   if(!is.null(points)){
     message("Snapping points according to the parameters selected...")
     suppressWarnings(dir.create(paste0(tempdir(), "/shapefiles")))
-    unlink(list.files(paste0(tempdir(), "/shapefiles"), full.names=TRUE))
+    unlink(list.files(paste0(tempdir(), "/shapefiles"), full.names = TRUE), recursive = TRUE, force = TRUE)
     if (snap == "nearest"){
       whitebox::wbt_jenson_snap_pour_points(pour_pts = paste0(tempdir(), "/temp_inputs/points.shp"),
                                             streams = paste0(directory, "/streams_derived.tif"),
@@ -155,11 +156,12 @@ drainageBasins <- function(DEM, streams = NULL, breach_dist = 10000, threshold =
                                      snap_dist = snap_dist)
     }
 
-    snapped_points <- terra::vect(paste0(tempdir(), "/shapefiles/snapped_points.shp")) #load to memory so as to iterate over each point, allowing for looping. Otherwise the tool creates non-overlapping rasters.
+    snapped_points <- suppressWarnings(terra::vect(paste0(tempdir(), "/shapefiles/snapped_points.shp"))) #load to memory so as to iterate over each point, allowing for looping. Otherwise the tool creates non-overlapping rasters.
     suppressWarnings(dir.create(paste0(tempdir(), "/rasters"))) #watershed tool outputs rasters (it works off a grid), but polygons are desired output. These are not saved.
-    unlink(list.files(paste0(tempdir(), "/rasters"), full.names=TRUE)) #ensure clear dir for repeat runs in same session
+    unlink(list.files(paste0(tempdir(), "/rasters"), full.names=TRUE), recursive = TRUE, force = TRUE) #ensure clear dir for repeat runs in same session
+    suppressWarnings(dir.create(save_path)) #Create the basic save_path if necessary
     suppressWarnings(dir.create(paste0(save_path, "/watersheds_", Sys.Date()))) #The desired outputs will go here
-    unlink(list.files(paste0(save_path, "/watersheds_", Sys.Date()), full.names = TRUE), recursive = TRUE)
+    unlink(list.files(paste0(save_path, "/watersheds_", Sys.Date()), full.names = TRUE), recursive = TRUE, force = TRUE)
     count <- 0 #For 'together' shapefiles. Need a feature to create the R object, then features can be appended.
     failed <- character()
     cat(crayon::blue$bold("\n  Starting watershed delineation. This can take a long time so get yourself a tea/coffee.  \n"))
@@ -193,13 +195,13 @@ drainageBasins <- function(DEM, streams = NULL, breach_dist = 10000, threshold =
         #and now that everything worked, create the directories and populate them.
         folder_name <- as.data.frame(snapped_pt[1, points_name_col])
         tryCatch({ #sometimes the identifier row is repeated (example duplicates, identified in another col). These are identified with a suffix.
-          dir.create(paste0(save_path, "/watersheds_", Sys.Date(), "/", folder_name))
           save_watershed <- paste0(save_path, "/watersheds_", Sys.Date(), "/", folder_name)
+          dir.create(save_watershed)
         }, warning = function(w) {
           files <- list.files(paste0(save_path, "/watersheds_", Sys.Date(), "/"), pattern = paste0(folder_name, "*_duplicate"))
           nums <- integer()
-          for (i in files){
-            num <- sub(".*[^0-9]([0-9]{1,5})$", "\\1", i)
+          for (j in files){
+            num <- sub(".*[^0-9]([0-9]{1,5})$", "\\1", j)
             if (grepl("[0-9]$", num)){
               nums <- c(nums, as.integer(num))
             }
@@ -231,15 +233,13 @@ drainageBasins <- function(DEM, streams = NULL, breach_dist = 10000, threshold =
       })
     }
     #Save the larger shapefiles to disc
-    suppressWarnings(dir.create(paste0(save_path, "/watersheds_", Sys.Date(), "/")))
     terra::writeVector(output_basins, paste0(save_path, "/watersheds_", Sys.Date(), "/drainage_basins.shp"), overwrite=TRUE)
     terra::writeVector(input_points, paste0(save_path, "/watersheds_", Sys.Date(), "/input_points.shp"), overwrite=TRUE)
     terra::writeVector(snapped_points, paste0(save_path, "/watersheds_", Sys.Date(), "/snapped_points.shp"), overwrite=TRUE)
 
     if (length(failed) == nrow(snapped_points)){
       cat(crayon::red$bold("Failed to delineate all points. Re-check your inputs carefully, and if the issue persists troubleshoot by running the function line by line."))
-    }
-    if (length(failed) > 0){
+    } else if (length(failed) > 0){
       cat(crayon::red$bold(paste0("Failed to delineate points ", paste(failed, collapse = ", "), ".")))
     }
 

@@ -9,7 +9,8 @@ hydroProcess(
   breach_dist,
   streams = NULL,
   burn_dist = 10,
-  save_path = NULL
+  save_path = NULL,
+  force_update_wbt = FALSE
 )
 }
 \arguments{
@@ -22,6 +23,8 @@ hydroProcess(
 \item{burn_dist}{The number of units (in DEM units) to use for burning-in the stream network.}
 
 \item{save_path}{An optional path in which to save the processed DEM. If left NULL will save it in the same directory as the provided DEM or, if the DEM is a {terra} object, return only {terra} objects.}
+
+\item{force_update_wbt}{Whitebox Tools is by default only downloaded if it cannot be found on the computer, and no check are performed to ensure the local version is current. Set to TRUE if you know that there is a new version and you would like to use it.}
 }
 \value{
 A hydro-processed DEM returned as a {terra} object and saved to disk if \code{save_path} is not null.
@@ -30,4 +33,10 @@ A hydro-processed DEM returned as a {terra} object and saved to disk if \code{sa
 Takes a digital elevation model and prepares it for hydrological analyses, such as basin delineation. Modifies the input DEM by breaching single cell pits/depressions and then breaching remaining depressions using a least cost algorithm (where cost is a function of distance plus elevation change to the DEM).
 
 If a streams layer is specified, a depression will be "burned-in" to the DEM along the stream path (after converting the vector file to a raster). This is very useful when trying to delineate basins with a poor resolution DEM. You can control the depth of this depression with parameter 'burn_dist'.
+}
+\details{
+Relies on two WhiteboxTools functions: \code{\link[whitebox:wbt_fill_single_cell_pits]{whitebox::wbt_fill_single_cell_pits()}} and \code{\link[whitebox:wbt_breach_depressions_least_cost]{whitebox::wbt_breach_depressions_least_cost()}}. If the parameter \code{streams} is specified, a depression is burned into the DEM after running fill_single_cell_pits and before breaching depressions.
+}
+\author{
+Ghislain de Laplante (gdela069@uottawa.ca or ghislain.delaplante@yukon.ca)
 }

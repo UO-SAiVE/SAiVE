@@ -1,5 +1,7 @@
 #' Check WhiteboxTools binaries installation
 #'
+#' @author Ghislain de Laplante (gdela069@uottawa.ca or ghislain.delaplante@yukon.ca)
+#'
 #' @description
 #' Checks for the existence of WhiteboxTools in its default directory and installs it if necessary or if `force = TRUE`.
 #'
@@ -10,6 +12,9 @@
 #'
 
 wbtCheck <- function(force = FALSE) {
+
+  rlang::check_installed("whitebox", reason = "required to use function drainageBasins") #This is here because whitebox is not a 'depends' of this package; it is only necessary for this function and is therefore in "suggests"
+
   wbt_check <- whitebox::check_whitebox_binary()
   if (!wbt_check){
     message("Installing WhiteboxTools binaries...")
