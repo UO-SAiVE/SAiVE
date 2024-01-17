@@ -1,15 +1,21 @@
 Package: SAiVE
-Title: Functions Used For SAiVE roup research, collaborations, and
-    publications
-Version: 0.0.0.9000
+Type: Package
+Title: Functions Used for SAiVE Group Research, Collaborations, and
+    Publications
+Version: 1.0.0
+Depends: R (>= 4.2)
 Authors@R: person("Ghislain", "de Laplante", , "ghislain.delaplante@yukon.ca", role = c("aut", "cre", "cph"),
            comment = c(ORCID = "0000-0002-5093-9185"))
 Description: Holds functions useful for SAiVE group research,
     collaboration, and publication in an R package format. This
     facilitates the re-use and re-purposing of code, fosters good code
     writing practices, and can allow others to benefit from the
-    work done by the SAiVE group.
-License: AGPL (>= 3) + file LICENSE
+    work done by the SAiVE group. Contributions are welcome via the GitHub repository by research group members and non-members.
+References:
+    Lindsay, John. (2020) <https://www.whiteboxgeo.com/>.
+URL: https://github.com/UO-SAiVE/SAiVE
+BugReports: https://github.com/UO-SAiVE/SAiVE/issues
+License: MIT + file LICENSE
 Imports: 
     caret,
     crayon,
@@ -25,7 +31,8 @@ Imports:
 Suggests: 
     testthat (>= 3.0.0),
     vdiffr,
-    whitebox
+    whitebox,
+    ranger
 Config/testthat/edition: 3
 Encoding: UTF-8
 Roxygen: list(markdown = TRUE)

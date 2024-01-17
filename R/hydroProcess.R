@@ -3,6 +3,8 @@
 #' @author Ghislain de Laplante (gdela069@uottawa.ca or ghislain.delaplante@yukon.ca)
 #'
 #' @description
+#' `r lifecycle::badge("stable")`
+#'
 #' Takes a digital elevation model and prepares it for hydrological analyses, such as basin delineation. Modifies the input DEM by breaching single cell pits/depressions and then breaching remaining depressions using a least cost algorithm (where cost is a function of distance plus elevation change to the DEM).
 #'
 #' If a streams layer is specified, a depression will be "burned-in" to the DEM along the stream path (after converting the vector file to a raster). This is very useful when trying to delineate basins with a poor resolution DEM. You can control the depth of this depression with parameter 'burn_dist'.
@@ -11,15 +13,26 @@
 #' Relies on two WhiteboxTools functions: [whitebox::wbt_fill_single_cell_pits()] and [whitebox::wbt_breach_depressions_least_cost()]. If the parameter `streams` is specified, a depression is burned into the DEM after running fill_single_cell_pits and before breaching depressions.
 #'
 #'
-#' @param DEM The path to a digital elevation model file with .tif extension, or a {terra} spatRaster object.
+#' @param DEM The path to a digital elevation model file with .tif extension, or a terra spatRaster object.
 #' @param breach_dist The max radius (in raster cells) in which to search for a path to breach depressions, passed to [whitebox::wbt_breach_depressions_least_cost()]. This value should be high to ensure all depressions are breached, keeping in mind that greater distance = greater computing time. Note that the DEM is *not* breached in order of lowest elevation to greatest, nor is it breached sequentially (order is unknown, but the raster is presumably searched in some grid pattern for depressions). This means that flow paths may need to cross multiple depressions, especially in low relief areas.
 #' @param streams Optionally, the path to the polylines shapefile or geopackage file containing streams, which can be used to improve hydrological accuracy when using poor quality DEMs but decent accuracy stream networks.
 #' @param burn_dist The number of units (in DEM units) to use for burning-in the stream network.
-#' @param save_path An optional path in which to save the processed DEM. If left NULL will save it in the same directory as the provided DEM or, if the DEM is a {terra} object, return only {terra} objects.
+#' @param save_path An optional path in which to save the processed DEM. If left NULL will save it in the same directory as the provided DEM or, if the DEM is a terra object, return only terra objects.
 #' @param force_update_wbt Whitebox Tools is by default only downloaded if it cannot be found on the computer, and no check are performed to ensure the local version is current. Set to TRUE if you know that there is a new version and you would like to use it.
 #'
-#' @return A hydro-processed DEM returned as a {terra} object and saved to disk if `save_path` is not null.
+#' @return A hydro-processed DEM returned as a terra object and saved to disk if `save_path` is not null.
 #' @export
+#' @examples
+#' \dontrun{
+#' # Running with terra objects:
+#' DEM <- terra::rast("path_to_DEM")
+#' streams <- terra::vect("path_to_streams")
+#' hydroProcess(DEM = DEM, breach_dist = 500, streams = streams)
+#'
+#' # Running with file paths:
+#' hydroProcess(DEM = "path_to_dem", breach_dist = 500, streams = "path_to_streams")
+#' }
+#'
 
 hydroProcess <- function(DEM, breach_dist, streams = NULL, burn_dist = 10, save_path = NULL, force_update_wbt = FALSE)
 {

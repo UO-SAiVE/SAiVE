@@ -12,13 +12,13 @@ spatPredict(
   fastCompare = TRUE,
   thinFeatures = TRUE,
   predict = FALSE,
-  save_path = "choose"
+  save_path = tempdir()
 )
 }
 \arguments{
-\item{features}{Independent variables. Must be either a NAMED list of {terra} spatRasters or a multi-layer (stacked) spatRaster. All layers must all have the same cell size, alignment, extent, and crs. These rasters can include the training extent as well as the desired extrapolation extent.}
+\item{features}{Independent variables. Must be either a NAMED list of terra spatRasters or a multi-layer (stacked) spatRaster. All layers must all have the same cell size, alignment, extent, and crs. These rasters can include the training extent as well as the desired extrapolation extent.}
 
-\item{outcome}{Dependent variable, as a {terra} spatVector of points with a single attribute table column (of class integer, numeric or factor). The class of this column dictates whether the problem is approached as a classification or regression problem.}
+\item{outcome}{Dependent variable, as a terra spatVector of points with a single attribute table column (of class integer, numeric or factor). The class of this column dictates whether the problem is approached as a classification or regression problem.}
 
 \item{trainControl}{Parameters used to control training of the machine learning model, created with \code{\link[caret:trainControl]{caret::trainControl()}}. Passed to the \code{trControl} parameter of \code{\link[caret:train]{caret::train()}}. If specifying multiple model types in \code{methods} you can use a single \code{trainControl} which will apply to all \code{methods}, or pass multiple variations to this argument as a list with names matching the names of \code{methods} (one element for each model specified in methods).}
 
@@ -30,7 +30,7 @@ spatPredict(
 
 \item{predict}{TRUE will apply the selected model to the full extent of \code{features} and return a raster saved to \code{save_path}.}
 
-\item{save_path}{The path (folder) to which you wish to save the predicted raster. Default "choose" lets you choose interactively. Not used unless \code{predict = TRUE}. If you don't want to save anywhere permanent point to the temp directory using tempdir().}
+\item{save_path}{The path (folder) to which you wish to save the predicted raster. Not used unless \code{predict = TRUE}. If you don't want to save anywhere permanent point to the temp directory using tempdir().}
 }
 \value{
 A list with three to five elements: the outcome of the VSURF variable selection process, details of the fitted model, model performance statistics, model performance comparison (if methods includes more than one model), and the final predicted raster (if predict = TRUE). If applicable, the predicted raster is written to disk.
@@ -58,6 +58,12 @@ Method for selecting the best model:
 TO BE FILLED IN
 }
 
+\examples{
+\dontrun{
+
+}
+
+}
 \author{
 Ghislain de Laplante (gdela069@uottawa.ca or ghislain.delaplante@yukon.ca)
 }

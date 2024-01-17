@@ -40,21 +40,21 @@ drainageBasins(
 
 \item{snap_dist}{The search radius within which to snap points to streams. Snapping method depends on 'snap' parameter. Note that distance units will match the projection, so probably best to work on a meter grid.}
 
-\item{save_path}{The directory path where you want the output shapefiles saved. Default "choose" lets you choose interactively.}
+\item{save_path}{The directory path where you want the output shapefiles saved.}
 
 \item{force_update_wbt}{Whitebox Tools is by default only downloaded if it cannot be found on the computer, and no check are performed to ensure the local version is current. Set to TRUE if you know that there is a new version and you would like to use it.}
 }
 \value{
-A list of {terra} objects. If points are specified: delineated drainages, pour points as provided, snapped pour points, and the derived streams network. If no points: flow accumulation and direction rasters, and the derived streams network. If points specified, also saved to disk: an ESRI shapefile for each drainage basin, plus the associated snapped pour point and the point as provided and a shapefiles for all basins/points together. In all cases the created or discovered rasters will be in the same folder as the DEM.
+A list of terra objects. If points are specified: delineated drainages, pour points as provided, snapped pour points, and the derived streams network. If no points: flow accumulation and direction rasters, and the derived streams network. If points specified, also saved to disk: an ESRI shapefile for each drainage basin, plus the associated snapped pour point and the point as provided and a shapefiles for all basins/points together. In all cases the created or discovered rasters will be in the same folder as the DEM.
 }
 \description{
-\ifelse{html}{\href{https://lifecycle.r-lib.org/articles/stages.html#experimental}{\figure{lifecycle-experimental.svg}{options: alt='[Experimental]'}}}{\strong{[Experimental]}}
+\ifelse{html}{\href{https://lifecycle.r-lib.org/articles/stages.html#stable}{\figure{lifecycle-stable.svg}{options: alt='[Stable]'}}}{\strong{[Stable]}}
 
 Hydro-processes a DEM, creating flow accumulation, direction, and streams rasters, and (optionally) delineates watersheds above one or more points using \href{www.whiteboxgeo.com/}{Whitebox Tools}. To facilitate this task in areas with poor quality/low resolution DEMs, can "burn-in" a stream network to the DEM to ensure proper stream placement (see details). Many time-consuming raster operations are performed, so the function will attempt to use existing rasters if they are present in the same path as the base DEM and named according to the function's naming conventions. In practice, this means that only the first run of the function needs to be very time consuming. See details for more information.
 
 NOTE 1: This tool can be slow to execute, and will use a lot of memory. Be patient, it might take several hours with a large DEM.
 
-NOTE 2: ESRI shapefiles, on which the Whitebox Tools functions depend, truncate column names to 10 characters. You may want to save and re-assign column names to the output {terra} object after this function has run.
+NOTE 2: ESRI shapefiles, on which the Whitebox Tools functions depend, truncate column names to 10 characters. You may want to save and re-assign column names to the output terra object after this function has run.
 
 NOTE 3: If you are have already run this tool and are using a DEM in the same directory as last time, you only need to specify the DEM and the points (and, optionally, a projection for the points output). Operations using the optional streams shapefile and generating flow accumulation direction, and the artificial streams raster do not need to be repeated unless you want to use a different DEM or streams shapefile.
 
@@ -76,6 +76,13 @@ Starting from a supplied DEM, the function will fill single-cell pits, burn-in a
 
 Be aware that this part of the function should ideally be used with a "simplified" streams shapefile. In particular, avoid or pre-process stream shapefiles that represent side-channels, as these will burn-in several parallel tracks to the DEM. ESRI has a tool called "simplify hydrology lines" which is great if you can ever get it to work, and WhiteboxTools has functions \code{\link[whitebox:wbt_remove_short_streams]{whitebox::wbt_remove_short_streams()}} to trim the streams raster, and \code{\link[whitebox:wbt_repair_stream_vector_topology]{whitebox::wbt_repair_stream_vector_topology()}} to help in converting a corrected streams vector to raster in the first place.
 }
+}
+\examples{
+\dontrun{
+# Must be run with file paths (not terra objects like other functions) as well as a save_path.
+drainageBasins(DEM = "path_to_dem", streams = "path_to_streams", breach_dist = 500, save_path = "path_to_save")
+}
+
 }
 \author{
 Ghislain de Laplante (gdela069@uottawa.ca or ghislain.delaplante@yukon.ca)

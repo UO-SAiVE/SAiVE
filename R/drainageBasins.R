@@ -3,13 +3,13 @@
 #' @author Ghislain de Laplante (gdela069@uottawa.ca or ghislain.delaplante@yukon.ca)
 #'
 #' @description
-#' `r lifecycle::badge("experimental")`
+#' `r lifecycle::badge("stable")`
 #'
-#' Hydro-processes a DEM, creating flow accumulation, direction, and streams rasters, and (optionally) delineates watersheds above one or more points using [Whitebox Tools](www.whiteboxgeo.com/). To facilitate this task in areas with poor quality/low resolution DEMs, can "burn-in" a stream network to the DEM to ensure proper stream placement (see details). Many time-consuming raster operations are performed, so the function will attempt to use existing rasters if they are present in the same path as the base DEM and named according to the function's naming conventions. In practice, this means that only the first run of the function needs to be very time consuming. See details for more information.
+#' Hydro-processes a DEM, creating flow accumulation, direction, and streams rasters, and (optionally) delineates watersheds above one or more points using [Whitebox Tools](https://www.whiteboxgeo.com/). To facilitate this task in areas with poor quality/low resolution DEMs, can "burn-in" a stream network to the DEM to ensure proper stream placement (see details). Many time-consuming raster operations are performed, so the function will attempt to use existing rasters if they are present in the same path as the base DEM and named according to the function's naming conventions. In practice, this means that only the first run of the function needs to be very time consuming. See details for more information.
 #'
 #' NOTE 1: This tool can be slow to execute, and will use a lot of memory. Be patient, it might take several hours with a large DEM.
 #'
-#' NOTE 2: ESRI shapefiles, on which the Whitebox Tools functions depend, truncate column names to 10 characters. You may want to save and re-assign column names to the output {terra} object after this function has run.
+#' NOTE 2: ESRI shapefiles, on which the Whitebox Tools functions depend, truncate column names to 10 characters. You may want to save and re-assign column names to the output terra object after this function has run.
 #'
 #' NOTE 3: If you are have already run this tool and are using a DEM in the same directory as last time, you only need to specify the DEM and the points (and, optionally, a projection for the points output). Operations using the optional streams shapefile and generating flow accumulation direction, and the artificial streams raster do not need to be repeated unless you want to use a different DEM or streams shapefile.
 #'
@@ -37,12 +37,22 @@
 #' @param projection Optionally, a projection string in the form "epsg:3579" (find them [here](https://epsg.io/)). The derived watersheds and point output layers will use this projection. If NULL the projection of the points will be used.
 #' @param snap Snap to the "nearest" derived (calculated) stream, or to the "greatest" flow accumulation cell within the snap distance? Beware that "greatest" will move the point downstream by up to the 'snap_dist' specified, while nearest might snap to the wrong stream.
 #' @param snap_dist The search radius within which to snap points to streams. Snapping method depends on 'snap' parameter. Note that distance units will match the projection, so probably best to work on a meter grid.
-#' @param save_path The directory path where you want the output shapefiles saved. Default "choose" lets you choose interactively.
+#' @param save_path The directory path where you want the output shapefiles saved.
 #' @param force_update_wbt Whitebox Tools is by default only downloaded if it cannot be found on the computer, and no check are performed to ensure the local version is current. Set to TRUE if you know that there is a new version and you would like to use it.
 #'
-#' @return A list of {terra} objects. If points are specified: delineated drainages, pour points as provided, snapped pour points, and the derived streams network. If no points: flow accumulation and direction rasters, and the derived streams network. If points specified, also saved to disk: an ESRI shapefile for each drainage basin, plus the associated snapped pour point and the point as provided and a shapefiles for all basins/points together. In all cases the created or discovered rasters will be in the same folder as the DEM.
+#' @return A list of terra objects. If points are specified: delineated drainages, pour points as provided, snapped pour points, and the derived streams network. If no points: flow accumulation and direction rasters, and the derived streams network. If points specified, also saved to disk: an ESRI shapefile for each drainage basin, plus the associated snapped pour point and the point as provided and a shapefiles for all basins/points together. In all cases the created or discovered rasters will be in the same folder as the DEM.
 #'
 #' @export
+#' @examples
+#' \dontrun{
+#' # Must be run with file paths (not terra objects like other functions) as well as a save_path.
+#' drainageBasins(DEM = "path",
+#'   streams = "path",
+#'   breach_dist = 500,
+#'   save_path = "path")
+#' }
+#'
+
 
 drainageBasins <- function(DEM, streams = NULL, breach_dist = 10000, threshold = 500, overwrite = FALSE, points = NULL, points_name_col = NULL, projection = NULL, snap = "nearest", snap_dist = 200, save_path = "choose", force_update_wbt = FALSE) {
 
@@ -54,9 +64,8 @@ drainageBasins <- function(DEM, streams = NULL, breach_dist = 10000, threshold =
   if (!(snap %in% c("nearest", "greatest"))){
     stop("The parameter 'snap' must be one of 'nearest' or 'greatest'.")
   }
-  if (save_path == "choose") {
-    message("Select the output folder for shapefiles...")
-    save_path <- as.character(utils::choose.dir(caption="Select Save Folder"))
+  if (!dir.exists(save_path)){
+    stop("The save_path you provided does not exist. Try again.")
   }
   if (!file.exists(DEM)){
     stop("The DEM you pointed to does not exist. Perhaps your file path is wrong?")

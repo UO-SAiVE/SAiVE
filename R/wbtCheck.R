@@ -9,6 +9,13 @@
 #'
 #' @return Returns the version number of the installed binaries and (if necessary) installs WhiteboxTools in its default location.
 #' @export
+#' @examples
+#' \dontrun{
+#' #Check if WhiteboxTools binaries are installed. If not, install latest version.
+#' wbtCheck()
+#' # Update WhiteboxTools binaries if they are already installed.
+#' wbtCheck(force = TRUE)
+#' }
 #'
 
 wbtCheck <- function(force = FALSE) {
