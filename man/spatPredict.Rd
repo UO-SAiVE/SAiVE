@@ -7,6 +7,7 @@
 spatPredict(
   features,
   outcome,
+  poly_sample = 1000,
   trainControl,
   methods,
   fastCompare = TRUE,
@@ -16,15 +17,17 @@ spatPredict(
 )
 }
 \arguments{
-\item{features}{Independent variables. Must be either a NAMED list of terra spatRasters or a multi-layer (stacked) spatRaster. All layers must all have the same cell size, alignment, extent, and crs. These rasters can include the training extent as well as the desired extrapolation extent.}
+\item{features}{Independent variables. Must be either a NAMED list of terra spatRasters or a multi-layer (stacked) spatRaster (c(rast1, rast2). All layers must all have the same cell size, alignment, extent, and crs. These rasters should include the training extent (that covered by the spatVector in \code{outcome}) as well as the desired extrapolation extent.}
 
-\item{outcome}{Dependent variable, as a terra spatVector of points with a single attribute table column (of class integer, numeric or factor). The class of this column dictates whether the problem is approached as a classification or regression problem.}
+\item{outcome}{Dependent variable, as a terra spatVector of points or polygons with a single attribute table column (of class integer, numeric or factor). The class of this column dictates whether the problem is approached as a classification or regression problem; see details. If specifying polygons, stratified random sampling will be done with \code{poly_sample} number of points per unique polygon value.}
+
+\item{poly_sample}{If passing a polygon SpatVector to \code{outcome}, the number of points to generate from the polygons for each unique polygon value.}
 
 \item{trainControl}{Parameters used to control training of the machine learning model, created with \code{\link[caret:trainControl]{caret::trainControl()}}. Passed to the \code{trControl} parameter of \code{\link[caret:train]{caret::train()}}. If specifying multiple model types in \code{methods} you can use a single \code{trainControl} which will apply to all \code{methods}, or pass multiple variations to this argument as a list with names matching the names of \code{methods} (one element for each model specified in methods).}
 
 \item{methods}{A string specifying one or more classification/regression model(s) to use. Passed to the \code{method} parameter of \code{\link[caret:train]{caret::train()}}. If specifying more than one method they will all be passed to \code{\link[caret:resamples]{caret::resamples()}} to compare model performance. Then, if \code{predict = TRUE}, the model with the highest accuracy will be selected to predict the raster surface across the exent of \code{features}. A different \code{trainControl} parameter can be used for each model in \code{methods}.}
 
-\item{fastCompare}{If specifying multiple model types in \code{methods} or one model with multiple different \code{trainControl} objects, should the points in \code{outcome} be sub-sampled for the model comparison step? The selected model will be trained on the full \code{outcome} data set after selection. TRUE/FALSE.}
+\item{fastCompare}{If specifying multiple model types in \code{methods} or one model with multiple different \code{trainControl} objects, should the points in \code{outcome} be sub-sampled for the model comparison step? The selected model will be trained on the full \code{outcome} data set after selection. TRUE/FALSE. This only applies if \code{methods} is length > 3 and if \code{outcome} has more than 4000 rows.}
 
 \item{thinFeatures}{Should random forest selection using \code{\link[VSURF:VSURF]{VSURF::VSURF()}} be used in an attempt to remove irrelevant variables?}
 
@@ -53,16 +56,67 @@ Models can be biased if they are given significantly more points in one outcome 
 
 \section{Classification or regression}{
 Whether this function treats your inputs as a classification or regression problem depends on the class attached to the outcome variable. A class \code{factor} will be treated as a classification problem while all other classes will be treated as regression problems.
+}
 
-Method for selecting the best model:
-TO BE FILLED IN
+\section{Method for selecting the best model:}{
+When specifying multiple model types in\code{methods}, each model type and \code{trainControl} pair (if \code{trainControl} is a list of length equal to \code{methods}) is run using \code{\link[caret:train]{caret::train()}}. To speed things up you can use \code{fastCompare} = TRUE. Models are then compared on their 'accuracy' metric as output by \code{\link[caret:resamples]{caret::resamples()}}, and the highest-performing model is selected. If \code{fastCompare} is TRUE, this model is then run on the complete data set provided in \code{outcome}. Model statistics are returned upon function completion, which allows the user to select their own 'best performing' model based on other criteria.
 }
 
 \examples{
 \dontrun{
+# Making examples for this function that don't use large data sets is impossible.
+# Substitute your own data.
 
+# Single model, single trainControl
+
+trainControl <- caret::trainControl(
+                method = "repeatedcv",
+                number = 10, # 10-fold Cross-validation
+                repeats = 10, # repeated ten times
+                verboseIter = FALSE,
+                returnResamp = "final",
+                savePredictions = "all",
+                allowParallel = TRUE)
+
+spatPredict(c(rast1, rast2, rast3), SpatVector, 10000, trainControl, "ranger")
+
+
+# Multiple models, single trainControl
+
+trainControl <- caret::trainControl(
+                method = "repeatedcv",
+                number = 10,
+                repeats = 10,
+                verboseIter =FALSE,
+                returnResamp = "final",
+                savePredictions = "all",
+                allowParallel = TRUE)
+
+spatPredict(c(rast1, rast2, rast3), SpatVector, 10000, trainControl, c("ranger", "Rborist"))
+
+
+# Multiple models, multiple trainControl
+
+trainControl <- list("ranger" = caret::trainControl(
+                                  method = "repeatedcv",
+                                  number = 10,
+                                  repeats = 10,
+                                  verboseIter = FALSE,
+                                  returnResamp = "final",
+                                  savePredictions = "all",
+                                  allowParallel = TRUE),
+                     "Rborist" = caret::trainControl(
+                                   method = "boot",
+                                   number = 10,
+                                   repeats = 10,
+                                   verboseIter = FALSE,
+                                   returnResamp = "final",
+                                   savePredictions = "all",
+                                   allowParallel = TRUE)
+                                   )
+
+spatPredict(c(rast1, rast2, rast3), SpatVector, 10000, trainControl, c("ranger", "Rborist"))
 }
-
 }
 \author{
 Ghislain de Laplante (gdela069@uottawa.ca or ghislain.delaplante@yukon.ca)

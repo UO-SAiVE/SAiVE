@@ -50,7 +50,7 @@ A list of terra objects. If points are specified: delineated drainages, pour poi
 \description{
 \ifelse{html}{\href{https://lifecycle.r-lib.org/articles/stages.html#stable}{\figure{lifecycle-stable.svg}{options: alt='[Stable]'}}}{\strong{[Stable]}}
 
-Hydro-processes a DEM, creating flow accumulation, direction, and streams rasters, and (optionally) delineates watersheds above one or more points using \href{www.whiteboxgeo.com/}{Whitebox Tools}. To facilitate this task in areas with poor quality/low resolution DEMs, can "burn-in" a stream network to the DEM to ensure proper stream placement (see details). Many time-consuming raster operations are performed, so the function will attempt to use existing rasters if they are present in the same path as the base DEM and named according to the function's naming conventions. In practice, this means that only the first run of the function needs to be very time consuming. See details for more information.
+Hydro-processes a DEM, creating flow accumulation, direction, and streams rasters, and (optionally) delineates watersheds above one or more points using \href{https://www.whiteboxgeo.com/}{Whitebox Tools}. To facilitate this task in areas with poor quality/low resolution DEMs, can "burn-in" a stream network to the DEM to ensure proper stream placement (see details). Many time-consuming raster operations are performed, so the function will attempt to use existing rasters if they are present in the same path as the base DEM and named according to the function's naming conventions. In practice, this means that only the first run of the function needs to be very time consuming. See details for more information.
 
 NOTE 1: This tool can be slow to execute, and will use a lot of memory. Be patient, it might take several hours with a large DEM.
 
@@ -80,7 +80,10 @@ Be aware that this part of the function should ideally be used with a "simplifie
 \examples{
 \dontrun{
 # Must be run with file paths (not terra objects like other functions) as well as a save_path.
-drainageBasins(DEM = "path_to_dem", streams = "path_to_streams", breach_dist = 500, save_path = "path_to_save")
+drainageBasins(DEM = "path",
+  streams = "path",
+  breach_dist = 500,
+  save_path = "path")
 }
 
 }

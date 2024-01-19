@@ -1,4 +1,4 @@
-#' Find machine learning models for use in {CARET}
+#' Find machine learning models for use in caret
 #'
 #' @author Ghislain de Laplante (gdela069@uottawa.ca or ghislain.delaplante@yukon.ca)
 #'
@@ -16,7 +16,12 @@
 #'
 #' @return A data.frame of models meeting the requested similarity threshold along with the model abbreviations that can be passed to [caret::train()] or to function [spatPredict()].
 #' @export
+#' @examples
+#' # Find models similar to 'ranger'
+#' modelMatch("ranger")
 #'
+#' # Find only models with a similarity > 0.8 to 'ranger'
+#' modelMatch("ranger", similarity = 0.8)
 
 modelMatch <- function(model, type = "match", similarity = 0.7)
 {
