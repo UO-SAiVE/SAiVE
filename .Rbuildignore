@@ -6,3 +6,4 @@
 ^\.github$
 ^tests\testthat\fixtures\spatPredict_data
 ^tests\testthat\fixtures\hydroProcess_createStreams_data
+^CRAN-SUBMISSION$

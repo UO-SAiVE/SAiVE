@@ -64,8 +64,7 @@ When specifying multiple model types in\code{methods}, each model type and \code
 
 \examples{
 \dontrun{
-# Making examples for this function that don't use large data sets is impossible.
-# Substitute your own data.
+# Illustative example; substitute your own data.
 
 # Single model, single trainControl
 

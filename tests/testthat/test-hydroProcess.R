@@ -5,7 +5,7 @@ test_that("DEM is hydro-processed as expected", {
   skip_on_ci()
   skip_on_cran()
   rast <- terra::rast(test_path("fixtures/hydroProcess_createStreams_data", "basin_test_rast.tif"))
-  shp <- suppressWarnings(terra::vect(test_path("fixtures/hydroProcess_createStreams_data", "water_flow.shp")))
+  shp <- suppressWarnings(terra::vect(test_path("fixtures/hydroProcess_createStreams_data", "streams.gpkg")))
   res <- hydroProcess(rast, 500, shp, 200) #These are relatively high values for the size of the DEM, but necessary for reproducibility.
   expect_snapshot(res, cran=FALSE)
   vdiffr::expect_doppelganger("correct DEM", terra::plot(res))
