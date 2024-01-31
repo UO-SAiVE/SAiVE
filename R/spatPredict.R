@@ -36,8 +36,7 @@
 #' @return A list with three to five elements: the outcome of the VSURF variable selection process, details of the fitted model, model performance statistics, model performance comparison (if methods includes more than one model), and the final predicted raster (if predict = TRUE). If applicable, the predicted raster is written to disk.
 #' @export
 #' @examples
-#' \dontrun{
-#' # Illustative example; substitute your own data.
+#' # These examples can take a while to run!
 #'
 #' # Single model, single trainControl
 #'
@@ -50,21 +49,7 @@
 #'                 savePredictions = "all",
 #'                 allowParallel = TRUE)
 #'
-#' spatPredict(c(rast1, rast2, rast3), SpatVector, 10000, trainControl, "ranger")
-#'
-#'
-#' # Multiple models, single trainControl
-#'
-#'trainControl <- caret::trainControl(
-#'                 method = "repeatedcv",
-#'                 number = 10,
-#'                 repeats = 10,
-#'                 verboseIter =FALSE,
-#'                 returnResamp = "final",
-#'                 savePredictions = "all",
-#'                 allowParallel = TRUE)
-#'
-#' spatPredict(c(rast1, rast2, rast3), SpatVector, 10000, trainControl, c("ranger", "Rborist"))
+#' spatPredict(c(aspect, solrad, slope), permafrost_polygons, 10000, trainControl, "ranger")
 #'
 #'
 #' # Multiple models, multiple trainControl
@@ -87,14 +72,13 @@
 #'                                    allowParallel = TRUE)
 #'                                    )
 #'
-#' spatPredict(c(rast1, rast2, rast3), SpatVector, 10000, trainControl, c("ranger", "Rborist"))
-#' }
+#' spatPredict(c(aspect, solrad, slope), permafrost_polygons, 10000, trainControl, c("ranger", "Rborist"))
+#'
 
 spatPredict <- function(features, outcome, poly_sample = 1000, trainControl, methods, fastCompare = TRUE, thinFeatures = TRUE, predict = FALSE, save_path = tempdir())
 {
 
   results <- list() #This will hold model performance measures and a terra pointer to the created spatRaster
-  set.seed(123) #set seed so that results will be reproducible later
 
   if (predict){
     if (!dir.exists(save_path)){
@@ -282,13 +266,13 @@ spatPredict <- function(features, outcome, poly_sample = 1000, trainControl, met
   results$selected_model <- model
   message("Model-specific hyperparameters were adjusted automatically; refer to returned object results$selected_model to see the result.")
 
-  #Test the selected model and print statistics
+  #Test the selected model and save statistics
   PermTest <- stats::predict(model, newdata = Testing)
   results$selected_model_performance <- caret::confusionMatrix(data = PermTest, as.factor(Testing$Type))
 
   if (predict){
     features <- terra::subset(features, names(TrainingDataFrame)[-1]) #remove layers from the raster stack using the pruned TrainingData (post-VSURF, if thinFeatures was set to TRUE)
-    message("Running the model on the full exetent of 'features' and saving to disk...")
+    message("Running the model on the full extent of 'features' and saving to disk...")
     results$prediction <- terra::predict(object=features, model=model, na.rm=TRUE, progress='text', filename=paste0(save_path, "/Prediction_", Sys.Date(), ".tif"), overwrite = TRUE, cores = parallel::detectCores() - 1)
   }
   return(results)

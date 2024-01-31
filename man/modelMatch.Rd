@@ -25,11 +25,13 @@ As of 2023-06-15, there are 238 different machine learning models which can be u
 This function requires internet access to get an up-to-date list of models.
 }
 \examples{
+
 # Find models similar to 'ranger'
 modelMatch("ranger")
 
 # Find only models with a similarity > 0.8 to 'ranger'
 modelMatch("ranger", similarity = 0.8)
+
 }
 \author{
 Ghislain de Laplante (gdela069@uottawa.ca or ghislain.delaplante@yukon.ca)

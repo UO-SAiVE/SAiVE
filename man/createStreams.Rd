@@ -35,15 +35,12 @@ Creates a stream network from a provided DEM. In most cases it is advisable to f
 This function is essentially a convenient wrapper around three WhiteboxTools geospatial tools: \code{\link[whitebox:wbt_d8_flow_accumulation]{whitebox::wbt_d8_flow_accumulation()}}, \code{\link[whitebox:wbt_d8_pointer]{whitebox::wbt_d8_pointer()}}, and \code{\link[whitebox:wbt_extract_streams]{whitebox::wbt_extract_streams()}}
 }
 \examples{
-\dontrun{
-# Running with terra objects:
-DEM <- terra::rast("path_to_DEM")
-createStreams(DEM = DEM)
+\dontshow{if (whitebox::check_whitebox_binary()) (if (getRversion() >= "3.4") withAutoprint else force)(\{ # examplesIf}
 
-# Running with file paths:
-createStreams(DEM = "path_to_dem")
-}
-
+hydroDEM <- hydroProcess(elev, 200, streams)
+res <- createStreams(hydroDEM, 50)
+terra::plot(res$streams_derived)
+\dontshow{\}) # examplesIf}
 }
 \author{
 Ghislain de Laplante (gdela069@uottawa.ca or ghislain.delaplante@yukon.ca)

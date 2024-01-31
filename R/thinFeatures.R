@@ -5,16 +5,16 @@
 #' @param data A data.frame containing a column for the outcome variable and *n* columns for predictor variables.
 #' @param outcome_col The name of the outcome variable column.
 #'
-#' @return A list of two data.frames: the outcome of the VSURF algorithm and the data after applying the VSURF results (rows removed if applicable).,
+#' @return A list of two data.frames: the outcome of the VSURF algorithm and the data after applying the VSURF results (rows removed if applicable)
 #' @export
 #'
 #' @examples
 #' # thinFeatures on 'permafrost' data set
-#' \dontrun{
+#'
 #' data(permafrost)
 #' res <- thinFeatures(permafrost, "Type")
+#'
 #' # Results will vary due to inherent radomness of random forests!
-#' }
 
 
 thinFeatures <- function(data, outcome_col) {
@@ -26,7 +26,6 @@ thinFeatures <- function(data, outcome_col) {
     stop("The name you specified for the outcome column is not present in the data.frame. Try again.")
   }
 
-  set.seed(123)
   #check and install if package ranger is not installed
   rlang::check_installed("ranger", reason = "Package ranger is required to select + retain only relevant variables")
 

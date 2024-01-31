@@ -43,14 +43,19 @@
 #' @return A list of terra objects. If points are specified: delineated drainages, pour points as provided, snapped pour points, and the derived streams network. If no points: flow accumulation and direction rasters, and the derived streams network. If points specified, also saved to disk: an ESRI shapefile for each drainage basin, plus the associated snapped pour point and the point as provided and a shapefiles for all basins/points together. In all cases the created or discovered rasters will be in the same folder as the DEM.
 #'
 #' @export
-#' @examples
-#' \dontrun{
-#' # Must be run with file paths (not terra objects like other functions) as well as a save_path.
-#' drainageBasins(DEM = "path",
-#'   streams = "path",
+#' @examplesIf whitebox::check_whitebox_binary()
+#'
+#' # Must be run with file paths as well as a save_path
+#'
+#' # Interim raster are created in the same path as the DEM
+#'
+#' file.copy(system.file("extdata/basin_rast.tif", package = "SAiVE"), paste0(tempdir(), "/basin_rast.tif"))
+#'
+#' drainageBasins(DEM = paste0(tempdir(), "/basin_rast.tif"),
+#'   streams = system.file("extdata/streams.gpkg", package = "SAiVE"),
+#'   points = system.file("extdata/basin_pts.gpkg", package = "SAiVE"),
 #'   breach_dist = 500,
-#'   save_path = "path")
-#' }
+#'   save_path = tempdir())
 #'
 
 
@@ -173,7 +178,7 @@ drainageBasins <- function(DEM, streams = NULL, breach_dist = 10000, threshold =
     unlink(list.files(paste0(save_path, "/watersheds_", Sys.Date()), full.names = TRUE), recursive = TRUE, force = TRUE)
     count <- 0 #For 'together' shapefiles. Need a feature to create the R object, then features can be appended.
     failed <- character()
-    cat(crayon::blue$bold("\n  Starting watershed delineation. This can take a long time so get yourself a tea/coffee.  \n"))
+    message(crayon::blue$bold("\n  Starting watershed delineation. This can take a long time so get yourself a tea/coffee.  \n"))
     for(i in 1:nrow(snapped_points)) {
       message("Delineating drainage basin for point ", as.data.frame(snapped_points[i, points_name_col]), " (", i, " of ", nrow(snapped_points), ")")
       tryCatch({
@@ -235,9 +240,9 @@ drainageBasins <- function(DEM, streams = NULL, breach_dist = 10000, threshold =
           input_points <- rbind(input_points, point)
           snapped_pts <- rbind(snapped_pts, snapped_pt)
         }
-        cat(crayon::blue("Success!  \n"))
+        message(crayon::blue("Success!  \n"))
       }, error = function(e) {
-        cat(crayon::red(paste0("Failed to delineate watershed for point named ", as.data.frame(snapped_points[i, points_name_col]), "  \n")))
+        warning(crayon::red(paste0("Failed to delineate watershed for point named ", as.data.frame(snapped_points[i, points_name_col]), "  \n")))
         failed <- c(failed, as.data.frame(snapped_points[i, points_name_col]))
       })
     }
@@ -247,16 +252,16 @@ drainageBasins <- function(DEM, streams = NULL, breach_dist = 10000, threshold =
     terra::writeVector(snapped_points, paste0(save_path, "/watersheds_", Sys.Date(), "/snapped_points.shp"), overwrite=TRUE)
 
     if (length(failed) == nrow(snapped_points)){
-      cat(crayon::red$bold("Failed to delineate all points. Re-check your inputs carefully, and if the issue persists troubleshoot by running the function line by line."))
+      warning(crayon::red$bold("Failed to delineate all points. Re-check your inputs carefully, and if the issue persists troubleshoot by running the function line by line."))
     } else if (length(failed) > 0){
-      cat(crayon::red$bold(paste0("Failed to delineate points ", paste(failed, collapse = ", "), ".")))
+      warning(crayon::red$bold(paste0("Failed to delineate points ", paste(failed, collapse = ", "), ".")))
     }
 
     result <- list(delineated_basins = output_basins, input_points = input_points, snapped_points = snapped_points, streams_derived = streams_derived, d8_flow_accumulation = d8fac, d8_flow_dir = d8pntr)
-    cat(crayon::blue$bold("Function complete: watersheds, points, and derived streams are returned and are saved to disk."))
+    message(crayon::blue$bold("Function complete: watersheds, points, and derived streams are returned and are saved to disk."))
   } else {
     result <- list(streams_derived = streams_derived, d8_flow_accumulation = d8fac, d8_flow_dir = d8pntr)
-    cat(crayon::blue$bold("Function complete: derived flow accumulation, direction, and streams rasters are returned and saved to disk."))
+    message(crayon::blue$bold("Function complete: derived flow accumulation, direction, and streams rasters are returned and saved to disk."))
   }
 
   return(result)

@@ -3,13 +3,8 @@
 test_that("single model spatPredict works", {
   skip_on_ci()
   skip_on_cran()
-  asp <- terra::rast(test_path("fixtures/spatPredict_data", "asp.tif"))
-  dem <- terra::rast(test_path("fixtures/spatPredict_data", "dem.tif"))
-  rad <- terra::rast(test_path("fixtures/spatPredict_data", "rad.tif"))
-  slp <- terra::rast(test_path("fixtures/spatPredict_data", "slp.tif"))
-  veg <- terra::rast(test_path("fixtures/spatPredict_data", "veg.tif"))
-  features <- c(asp, dem, rad, slp, veg)
-  outcome <- terra::vect(test_path("fixtures/spatPredict_data", "pmfst.gpkg"))
+  features <- c(aspect, elev, solrad, slope, veg)
+  outcome <- permafrost_polygons
   outcome <- outcome[ ,2]
   outcome$Type <- as.factor(outcome$Type)
   trainControl <- caret::trainControl(
@@ -29,13 +24,8 @@ test_that("single model spatPredict works", {
 test_that("multi-model spatPredict works", {
   skip_on_ci()
   skip_on_cran()
-  asp <- terra::rast(test_path("fixtures/spatPredict_data", "asp.tif"))
-  dem <- terra::rast(test_path("fixtures/spatPredict_data", "dem.tif"))
-  rad <- terra::rast(test_path("fixtures/spatPredict_data", "rad.tif"))
-  slp <- terra::rast(test_path("fixtures/spatPredict_data", "slp.tif"))
-  veg <- terra::rast(test_path("fixtures/spatPredict_data", "veg.tif"))
-  features <- c(asp, dem, rad, slp, veg)
-  outcome <- terra::vect(test_path("fixtures/spatPredict_data", "pmfst.gpkg"))
+  features <- c(aspect, elev, solrad, slope, veg)
+  outcome <- permafrost_polygons
   outcome <- outcome[ ,2]
   outcome$Type <- as.factor(outcome$Type)
   trainControl <- list("ranger" = caret::trainControl(

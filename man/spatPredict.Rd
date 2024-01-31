@@ -63,8 +63,7 @@ When specifying multiple model types in\code{methods}, each model type and \code
 }
 
 \examples{
-\dontrun{
-# Illustative example; substitute your own data.
+# These examples can take a while to run!
 
 # Single model, single trainControl
 
@@ -77,21 +76,7 @@ trainControl <- caret::trainControl(
                 savePredictions = "all",
                 allowParallel = TRUE)
 
-spatPredict(c(rast1, rast2, rast3), SpatVector, 10000, trainControl, "ranger")
-
-
-# Multiple models, single trainControl
-
-trainControl <- caret::trainControl(
-                method = "repeatedcv",
-                number = 10,
-                repeats = 10,
-                verboseIter =FALSE,
-                returnResamp = "final",
-                savePredictions = "all",
-                allowParallel = TRUE)
-
-spatPredict(c(rast1, rast2, rast3), SpatVector, 10000, trainControl, c("ranger", "Rborist"))
+spatPredict(c(aspect, solrad, slope), permafrost_polygons, 10000, trainControl, "ranger")
 
 
 # Multiple models, multiple trainControl
@@ -114,8 +99,8 @@ trainControl <- list("ranger" = caret::trainControl(
                                    allowParallel = TRUE)
                                    )
 
-spatPredict(c(rast1, rast2, rast3), SpatVector, 10000, trainControl, c("ranger", "Rborist"))
-}
+spatPredict(c(aspect, solrad, slope), permafrost_polygons, 10000, trainControl, c("ranger", "Rborist"))
+
 }
 \author{
 Ghislain de Laplante (gdela069@uottawa.ca or ghislain.delaplante@yukon.ca)

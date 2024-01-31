@@ -12,16 +12,16 @@ thinFeatures(data, outcome_col)
 \item{outcome_col}{The name of the outcome variable column.}
 }
 \value{
-A list of two data.frames: the outcome of the VSURF algorithm and the data after applying the VSURF results (rows removed if applicable).,
+A list of two data.frames: the outcome of the VSURF algorithm and the data after applying the VSURF results (rows removed if applicable)
 }
 \description{
 Uses \code{\link[VSURF:VSURF]{VSURF::VSURF()}} to build random forests and remove irrelevant predictor variables from a data.frame containing an outcome variable and 2 or more predictor variables.
 }
 \examples{
 # thinFeatures on 'permafrost' data set
-\dontrun{
+
 data(permafrost)
 res <- thinFeatures(permafrost, "Type")
+
 # Results will vary due to inherent radomness of random forests!
-}
 }
