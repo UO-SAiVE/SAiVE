@@ -43,11 +43,18 @@ Relies on two WhiteboxTools functions: \code{\link[whitebox:wbt_fill_single_cell
 \dontshow{if (whitebox::check_whitebox_binary()) (if (getRversion() >= "3.4") withAutoprint else force)(\{ # examplesIf}
 
 # Running with terra objects:
-res <- hydroProcess(DEM = elev, breach_dist = 500, streams = streams)
+res <- hydroProcess(DEM = SAiVE:::elev,
+  breach_dist = 500,
+  streams = SAiVE:::streams)
+
 terra::plot(res)
 
 # Running with file paths:
-res <- hydroProcess(DEM = system.file("extdata/dem.tif", package = "SAiVE"), breach_dist = 500, streams = system.file("extdata/streams.gpkg", package = "SAiVE"))
+res <- hydroProcess(DEM = system.file("extdata/dem.tif", package = "SAiVE"),
+  breach_dist = 500,
+  streams = system.file("extdata/streams.gpkg", package = "SAiVE")
+  )
+
 terra::plot(res)
 \dontshow{\}) # examplesIf}
 }

@@ -22,7 +22,7 @@ drainageBasins(
 \arguments{
 \item{DEM}{The path to a DEM including extension from which to delineate watersheds/catchments. Must be in .tif format. Derived layers such as flow accumulation, flow direction, and streams will inherit the DEM coordinate reference system.}
 
-\item{streams}{Optionally, the path to the polylines shapefile containing streams, which can be used to improve accuracy when using poor quality DEMs. If this shapefile is the only input parameter being modified from previous runs (i.e. you've found a new/better streams shapefile but the DEM is unchanged) then speficy a shapefile here and overwrite = TRUE.}
+\item{streams}{Optionally, the path to the polylines shapefile/geopackage containing lines, which can be used to improve accuracy when using poor quality DEMs. If this shapefile is the only input parameter being modified from previous runs (i.e. you've found a new/better streams shapefile but the DEM is unchanged) then specify a shapefile or geopackage lines file here and overwrite = TRUE.}
 
 \item{breach_dist}{The max radius (in raster cells) for which to search for a path to breach depressions, passed to \code{\link[whitebox:wbt_breach_depressions_least_cost]{whitebox::wbt_breach_depressions_least_cost()}}. This value should be high to ensure all depressions are breached. Note that the DEM is \emph{not} breached in order of lowest elevation to greatest, nor is it breached sequentially (order is unknown, but the raster is presumably searched in some grid pattern for depressions). This means that flow paths may need to cross multiple depressions, especially in low relief areas.}
 
@@ -79,18 +79,23 @@ Be aware that this part of the function should ideally be used with a "simplifie
 }
 \examples{
 \dontshow{if (whitebox::check_whitebox_binary()) (if (getRversion() >= "3.4") withAutoprint else force)(\{ # examplesIf}
-
+\donttest{
 # Must be run with file paths as well as a save_path
 
 # Interim raster are created in the same path as the DEM
 
-file.copy(system.file("extdata/basin_rast.tif", package = "SAiVE"), paste0(tempdir(), "/basin_rast.tif"))
+file.copy(system.file("extdata/basin_rast.tif", package = "SAiVE"),
+  paste0(tempdir(), "/basin_rast.tif"))
 
-drainageBasins(DEM = paste0(tempdir(), "/basin_rast.tif"),
+basins <- drainageBasins(DEM = paste0(tempdir(), "/basin_rast.tif"),
   streams = system.file("extdata/streams.gpkg", package = "SAiVE"),
   points = system.file("extdata/basin_pts.gpkg", package = "SAiVE"),
+  points_name_col = "ID",
   breach_dist = 500,
   save_path = tempdir())
+
+  terra::plot(basins$delineated_basins)
+}
 \dontshow{\}) # examplesIf}
 }
 \author{

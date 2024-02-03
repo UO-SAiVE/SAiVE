@@ -25,11 +25,18 @@
 #' @examplesIf whitebox::check_whitebox_binary()
 #'
 #' # Running with terra objects:
-#' res <- hydroProcess(DEM = elev, breach_dist = 500, streams = streams)
+#' res <- hydroProcess(DEM = SAiVE:::elev,
+#'   breach_dist = 500,
+#'   streams = SAiVE:::streams)
+#'
 #' terra::plot(res)
 #'
 #' # Running with file paths:
-#' res <- hydroProcess(DEM = system.file("extdata/dem.tif", package = "SAiVE"), breach_dist = 500, streams = system.file("extdata/streams.gpkg", package = "SAiVE"))
+#' res <- hydroProcess(DEM = system.file("extdata/dem.tif", package = "SAiVE"),
+#'   breach_dist = 500,
+#'   streams = system.file("extdata/streams.gpkg", package = "SAiVE")
+#'   )
+#'
 #' terra::plot(res)
 #'
 

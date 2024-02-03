@@ -63,44 +63,60 @@ When specifying multiple model types in\code{methods}, each model type and \code
 }
 
 \examples{
+\dontshow{if (interactive()) (if (getRversion() >= "3.4") withAutoprint else force)(\{ # examplesIf}
 # These examples can take a while to run!
 
 # Single model, single trainControl
 
 trainControl <- caret::trainControl(
                 method = "repeatedcv",
-                number = 10, # 10-fold Cross-validation
-                repeats = 10, # repeated ten times
+                number = 2, # 2-fold Cross-validation
+                repeats = 2, # repeated 2 times
                 verboseIter = FALSE,
                 returnResamp = "final",
                 savePredictions = "all",
                 allowParallel = TRUE)
 
-spatPredict(c(aspect, solrad, slope), permafrost_polygons, 10000, trainControl, "ranger")
+ outcome <- SAiVE:::permafrost_polygons
+ outcome$Type <- as.factor(outcome$Type)
+
+result <- spatPredict(features = c(SAiVE:::aspect, SAiVE:::solrad, SAiVE:::slope),
+  outcome = outcome,
+  poly_sample = 100,
+  trainControl = trainControl,
+  methods = "ranger")
+
+terra::plot(result$prediction)
 
 
 # Multiple models, multiple trainControl
 
 trainControl <- list("ranger" = caret::trainControl(
                                   method = "repeatedcv",
-                                  number = 10,
-                                  repeats = 10,
+                                  number = 2,
+                                  repeats = 2,
                                   verboseIter = FALSE,
                                   returnResamp = "final",
                                   savePredictions = "all",
                                   allowParallel = TRUE),
                      "Rborist" = caret::trainControl(
                                    method = "boot",
-                                   number = 10,
-                                   repeats = 10,
+                                   number = 2,
+                                   repeats = 2,
                                    verboseIter = FALSE,
                                    returnResamp = "final",
                                    savePredictions = "all",
                                    allowParallel = TRUE)
                                    )
 
-spatPredict(c(aspect, solrad, slope), permafrost_polygons, 10000, trainControl, c("ranger", "Rborist"))
+result <- spatPredict(features = c(SAiVE:::aspect, SAiVE:::solrad, SAiVE:::slope),
+  outcome = outcome,
+  poly_sample = 100,
+  trainControl = trainControl,
+  methods = c("ranger", "Rborist"))
 
+terra::plot(result$prediction)
+\dontshow{\}) # examplesIf}
 }
 \author{
 Ghislain de Laplante (gdela069@uottawa.ca or ghislain.delaplante@yukon.ca)

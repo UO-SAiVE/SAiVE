@@ -5,12 +5,11 @@ test_that("single model spatPredict works", {
   skip_on_cran()
   features <- c(aspect, elev, solrad, slope, veg)
   outcome <- permafrost_polygons
-  outcome <- outcome[ ,2]
   outcome$Type <- as.factor(outcome$Type)
   trainControl <- caret::trainControl(
     method = "repeatedcv",
-    number = 10,
-    repeats = 10,
+    number = 5,
+    repeats = 5,
     verboseIter = FALSE,
     returnResamp = "final",
     savePredictions = "all",
@@ -26,7 +25,6 @@ test_that("multi-model spatPredict works", {
   skip_on_cran()
   features <- c(aspect, elev, solrad, slope, veg)
   outcome <- permafrost_polygons
-  outcome <- outcome[ ,2]
   outcome$Type <- as.factor(outcome$Type)
   trainControl <- list("ranger" = caret::trainControl(
     method = "repeatedcv",

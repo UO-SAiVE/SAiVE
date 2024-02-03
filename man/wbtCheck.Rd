@@ -16,14 +16,13 @@ Returns the version number of the installed binaries and (if necessary) installs
 Checks for the existence of WhiteboxTools in its default directory and installs it if necessary or if \code{force = TRUE}.
 }
 \examples{
-\donttest{
+\dontshow{if (interactive()) (if (getRversion() >= "3.4") withAutoprint else force)(\{ # examplesIf}
 #Check if WhiteboxTools binaries are installed. If not, install latest version.
 wbtCheck()
 
 # Update WhiteboxTools binaries if they are already installed.
 wbtCheck(force = TRUE)
-}
-
+\dontshow{\}) # examplesIf}
 }
 \author{
 Ghislain de Laplante (gdela069@uottawa.ca or ghislain.delaplante@yukon.ca)

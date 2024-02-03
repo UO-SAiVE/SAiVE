@@ -8,13 +8,14 @@
 #' @return A list of two data.frames: the outcome of the VSURF algorithm and the data after applying the VSURF results (rows removed if applicable)
 #' @export
 #'
-#' @examples
+#' @examplesIf interactive()
 #' # thinFeatures on 'permafrost' data set
 #'
 #' data(permafrost)
 #' res <- thinFeatures(permafrost, "Type")
 #'
 #' # Results will vary due to inherent radomness of random forests!
+#'
 
 
 thinFeatures <- function(data, outcome_col) {

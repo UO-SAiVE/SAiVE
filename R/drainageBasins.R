@@ -28,7 +28,7 @@
 #' Be aware that this part of the function should ideally be used with a "simplified" streams shapefile. In particular, avoid or pre-process stream shapefiles that represent side-channels, as these will burn-in several parallel tracks to the DEM. ESRI has a tool called "simplify hydrology lines" which is great if you can ever get it to work, and WhiteboxTools has functions [whitebox::wbt_remove_short_streams()] to trim the streams raster, and [whitebox::wbt_repair_stream_vector_topology()] to help in converting a corrected streams vector to raster in the first place.
 #'
 #' @param DEM The path to a DEM including extension from which to delineate watersheds/catchments. Must be in .tif format. Derived layers such as flow accumulation, flow direction, and streams will inherit the DEM coordinate reference system.
-#' @param streams Optionally, the path to the polylines shapefile containing streams, which can be used to improve accuracy when using poor quality DEMs. If this shapefile is the only input parameter being modified from previous runs (i.e. you've found a new/better streams shapefile but the DEM is unchanged) then speficy a shapefile here and overwrite = TRUE.
+#' @param streams Optionally, the path to the polylines shapefile/geopackage containing lines, which can be used to improve accuracy when using poor quality DEMs. If this shapefile is the only input parameter being modified from previous runs (i.e. you've found a new/better streams shapefile but the DEM is unchanged) then specify a shapefile or geopackage lines file here and overwrite = TRUE.
 #' @param breach_dist The max radius (in raster cells) for which to search for a path to breach depressions, passed to [whitebox::wbt_breach_depressions_least_cost()]. This value should be high to ensure all depressions are breached. Note that the DEM is *not* breached in order of lowest elevation to greatest, nor is it breached sequentially (order is unknown, but the raster is presumably searched in some grid pattern for depressions). This means that flow paths may need to cross multiple depressions, especially in low relief areas.
 #' @param threshold The accumulation threshold in DEM cells necessary to start defining a stream. This streams raster is necessary to snap pout points to, so make sure not to make this number too great!
 #' @param overwrite If applicable, should rasters present in the same directory as the DEM be overwritten? This will also force the recalculation of derived layers.
@@ -44,19 +44,23 @@
 #'
 #' @export
 #' @examplesIf whitebox::check_whitebox_binary()
-#'
+#' \donttest{
 #' # Must be run with file paths as well as a save_path
 #'
 #' # Interim raster are created in the same path as the DEM
 #'
-#' file.copy(system.file("extdata/basin_rast.tif", package = "SAiVE"), paste0(tempdir(), "/basin_rast.tif"))
+#' file.copy(system.file("extdata/basin_rast.tif", package = "SAiVE"),
+#'   paste0(tempdir(), "/basin_rast.tif"))
 #'
-#' drainageBasins(DEM = paste0(tempdir(), "/basin_rast.tif"),
+#' basins <- drainageBasins(DEM = paste0(tempdir(), "/basin_rast.tif"),
 #'   streams = system.file("extdata/streams.gpkg", package = "SAiVE"),
 #'   points = system.file("extdata/basin_pts.gpkg", package = "SAiVE"),
+#'   points_name_col = "ID",
 #'   breach_dist = 500,
 #'   save_path = tempdir())
 #'
+#'   terra::plot(basins$delineated_basins)
+#' }
 
 
 drainageBasins <- function(DEM, streams = NULL, breach_dist = 10000, threshold = 500, overwrite = FALSE, points = NULL, points_name_col = NULL, projection = NULL, snap = "nearest", snap_dist = 200, save_path = "choose", force_update_wbt = FALSE) {
@@ -257,11 +261,22 @@ drainageBasins <- function(DEM, streams = NULL, breach_dist = 10000, threshold =
       warning(crayon::red$bold(paste0("Failed to delineate points ", paste(failed, collapse = ", "), ".")))
     }
 
-    result <- list(delineated_basins = output_basins, input_points = input_points, snapped_points = snapped_points, streams_derived = streams_derived, d8_flow_accumulation = d8fac, d8_flow_dir = d8pntr)
-    message(crayon::blue$bold("Function complete: watersheds, points, and derived streams are returned and are saved to disk."))
+    if (exists("d8fac")){
+      result <- list(delineated_basins = output_basins, input_points = input_points, snapped_points = snapped_points, streams_derived = streams_derived, d8_flow_accumulation = d8fac, d8_flow_dir = d8pntr)
+      message(crayon::blue$bold("Function complete: drainage basins, points, and derived streams are returned and are saved to disk."))
+    } else {
+      result <- list(delineated_basins = output_basins, input_points = input_points, snapped_points = snapped_points, streams_derived = streams_derived, d8_flow_dir = d8pntr)
+      message(crayon::blue$bold("Function complete: drainage basins, points, and derived streams are returned and are saved to disk."))
+    }
   } else {
-    result <- list(streams_derived = streams_derived, d8_flow_accumulation = d8fac, d8_flow_dir = d8pntr)
-    message(crayon::blue$bold("Function complete: derived flow accumulation, direction, and streams rasters are returned and saved to disk."))
+    if (exists("d8fac")){
+      result <- list(streams_derived = streams_derived, d8_flow_accumulation = d8fac, d8_flow_dir = d8pntr)
+      message(crayon::blue$bold("Function complete: derived flow accumulation, direction, and streams rasters are returned and saved to disk."))
+    } else {
+      result <- list(streams_derived = streams_derived, d8_flow_dir = d8pntr)
+      message(crayon::blue$bold("Function complete: derived flow direction, and streams rasters are returned and saved to disk."))
+    }
+
   }
 
   return(result)
