@@ -22,7 +22,7 @@ drainageBasins(
 \arguments{
 \item{DEM}{The path to a DEM including extension from which to delineate watersheds/catchments. Must be in .tif format. Derived layers such as flow accumulation, flow direction, and streams will inherit the DEM coordinate reference system.}
 
-\item{streams}{Optionally, the path to the polylines shapefile containing streams, which can be used to improve accuracy when using poor quality DEMs. If this shapefile is the only input parameter being modified from previous runs (i.e. you've found a new/better streams shapefile but the DEM is unchanged) then speficy a shapefile here and overwrite = TRUE.}
+\item{streams}{Optionally, the path to the polylines shapefile/geopackage containing lines, which can be used to improve accuracy when using poor quality DEMs. If this shapefile is the only input parameter being modified from previous runs (i.e. you've found a new/better streams shapefile but the DEM is unchanged) then specify a shapefile or geopackage lines file here and overwrite = TRUE.}
 
 \item{breach_dist}{The max radius (in raster cells) for which to search for a path to breach depressions, passed to \code{\link[whitebox:wbt_breach_depressions_least_cost]{whitebox::wbt_breach_depressions_least_cost()}}. This value should be high to ensure all depressions are breached. Note that the DEM is \emph{not} breached in order of lowest elevation to greatest, nor is it breached sequentially (order is unknown, but the raster is presumably searched in some grid pattern for depressions). This means that flow paths may need to cross multiple depressions, especially in low relief areas.}
 
@@ -58,7 +58,7 @@ NOTE 2: ESRI shapefiles, on which the Whitebox Tools functions depend, truncate 
 
 NOTE 3: If you are have already run this tool and are using a DEM in the same directory as last time, you only need to specify the DEM and the points (and, optionally, a projection for the points output). Operations using the optional streams shapefile and generating flow accumulation direction, and the artificial streams raster do not need to be repeated unless you want to use a different DEM or streams shapefile.
 
-NOTE 4: This function is very memory (RAM) intensive. You'll want at least 16GB of RAM, and to ensure that most of it is free. If you get an error such as 'cannot allocate xxxxx bytes', you probably don't have the resources to run the tool. The WhiteboxTool functions are memory hungry: all rasters are un-compressed and converted to 64-bit float type before starting work, and there needs to be room to store more than twice that uncompressed raster size in memory. Example: for the Yukon at a resolution of 16.9 meters (the highest resolution CDEM) the tool attempts to allocate 36GB of memory.
+NOTE 4: This function is very memory (RAM) intensive. You'll want at least 16GB of RAM, and to ensure that most of it is free. If you get an error such as 'cannot allocate xxxxx bytes', you probably don't have the resources to run the tool. The WhiteboxTools functions are memory hungry: all rasters are un-compressed and converted to 64-bit float type before starting work, and there needs to be room to store more than twice that uncompressed raster size in memory. Example: for the Yukon at a resolution of 16.9 meters (the highest resolution CDEM) the tool attempts to allocate 36GB of memory.
 }
 \details{
 This function uses software from the Whitebox geospatial analysis package, built by Prof. John Lindsay. Refer to \href{https://www.whiteboxgeo.com/manual/wbt_book/intro.html}{this link} for more information.
@@ -78,14 +78,25 @@ Be aware that this part of the function should ideally be used with a "simplifie
 }
 }
 \examples{
-\dontrun{
-# Must be run with file paths (not terra objects like other functions) as well as a save_path.
-drainageBasins(DEM = "path",
-  streams = "path",
-  breach_dist = 500,
-  save_path = "path")
-}
+\dontshow{if (whitebox::check_whitebox_binary()) (if (getRversion() >= "3.4") withAutoprint else force)(\{ # examplesIf}
+\donttest{
+# Must be run with file paths as well as a save_path
 
+# Interim raster are created in the same path as the DEM
+
+file.copy(system.file("extdata/basin_rast.tif", package = "SAiVE"),
+  paste0(tempdir(), "/basin_rast.tif"))
+
+basins <- drainageBasins(DEM = paste0(tempdir(), "/basin_rast.tif"),
+  streams = system.file("extdata/streams.gpkg", package = "SAiVE"),
+  points = system.file("extdata/basin_pts.gpkg", package = "SAiVE"),
+  points_name_col = "ID",
+  breach_dist = 500,
+  save_path = tempdir())
+
+  terra::plot(basins$delineated_basins)
+}
+\dontshow{\}) # examplesIf}
 }
 \author{
 Ghislain de Laplante (gdela069@uottawa.ca or ghislain.delaplante@yukon.ca)

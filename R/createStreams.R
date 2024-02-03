@@ -19,16 +19,13 @@
 #'
 #' @return A raster representation of streams and, if requested, a vector representation of streams. Returned as terra objects and saved to disk if `save_path` is not null.
 #' @export
-#' @examples
-#' \dontrun{
-#' # Running with terra objects:
-#' DEM <- terra::rast("path_to_DEM")
-#' createStreams(DEM = DEM)
+#' @examplesIf whitebox::check_whitebox_binary()
+#' \donttest{
+#' hydroDEM <- hydroProcess(SAiVE:::elev, 200, SAiVE:::streams)
+#' res <- createStreams(hydroDEM, 50)
 #'
-#' # Running with file paths:
-#' createStreams(DEM = "path_to_dem")
+#' terra::plot(res$streams_derived)
 #' }
-#'
 
 createStreams <- function(DEM, threshold, vector = NULL, save_path = NULL, force_update_wbt = FALSE){
 

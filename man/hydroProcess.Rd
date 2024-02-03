@@ -40,16 +40,23 @@ If a streams layer is specified, a depression will be "burned-in" to the DEM alo
 Relies on two WhiteboxTools functions: \code{\link[whitebox:wbt_fill_single_cell_pits]{whitebox::wbt_fill_single_cell_pits()}} and \code{\link[whitebox:wbt_breach_depressions_least_cost]{whitebox::wbt_breach_depressions_least_cost()}}. If the parameter \code{streams} is specified, a depression is burned into the DEM after running fill_single_cell_pits and before breaching depressions.
 }
 \examples{
-\dontrun{
+\dontshow{if (whitebox::check_whitebox_binary()) (if (getRversion() >= "3.4") withAutoprint else force)(\{ # examplesIf}
+
 # Running with terra objects:
-DEM <- terra::rast("path_to_DEM")
-streams <- terra::vect("path_to_streams")
-hydroProcess(DEM = DEM, breach_dist = 500, streams = streams)
+res <- hydroProcess(DEM = SAiVE:::elev,
+  breach_dist = 500,
+  streams = SAiVE:::streams)
+
+terra::plot(res)
 
 # Running with file paths:
-hydroProcess(DEM = "path_to_dem", breach_dist = 500, streams = "path_to_streams")
-}
+res <- hydroProcess(DEM = system.file("extdata/dem.tif", package = "SAiVE"),
+  breach_dist = 500,
+  streams = system.file("extdata/streams.gpkg", package = "SAiVE")
+  )
 
+terra::plot(res)
+\dontshow{\}) # examplesIf}
 }
 \author{
 Ghislain de Laplante (gdela069@uottawa.ca or ghislain.delaplante@yukon.ca)

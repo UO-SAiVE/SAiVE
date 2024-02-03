@@ -35,67 +35,65 @@
 #'
 #' @return A list with three to five elements: the outcome of the VSURF variable selection process, details of the fitted model, model performance statistics, model performance comparison (if methods includes more than one model), and the final predicted raster (if predict = TRUE). If applicable, the predicted raster is written to disk.
 #' @export
-#' @examples
-#' \dontrun{
-#' # Making examples for this function that don't use large data sets is impossible.
-#' # Substitute your own data.
+#' @examplesIf interactive()
+#' # These examples can take a while to run!
 #'
 #' # Single model, single trainControl
 #'
 #' trainControl <- caret::trainControl(
 #'                 method = "repeatedcv",
-#'                 number = 10, # 10-fold Cross-validation
-#'                 repeats = 10, # repeated ten times
+#'                 number = 2, # 2-fold Cross-validation
+#'                 repeats = 2, # repeated 2 times
 #'                 verboseIter = FALSE,
 #'                 returnResamp = "final",
 #'                 savePredictions = "all",
 #'                 allowParallel = TRUE)
 #'
-#' spatPredict(c(rast1, rast2, rast3), SpatVector, 10000, trainControl, "ranger")
+#'  outcome <- SAiVE:::permafrost_polygons
+#'  outcome$Type <- as.factor(outcome$Type)
 #'
+#' result <- spatPredict(features = c(SAiVE:::aspect, SAiVE:::solrad, SAiVE:::slope),
+#'   outcome = outcome,
+#'   poly_sample = 100,
+#'   trainControl = trainControl,
+#'   methods = "ranger")
 #'
-#' # Multiple models, single trainControl
-#'
-#'trainControl <- caret::trainControl(
-#'                 method = "repeatedcv",
-#'                 number = 10,
-#'                 repeats = 10,
-#'                 verboseIter =FALSE,
-#'                 returnResamp = "final",
-#'                 savePredictions = "all",
-#'                 allowParallel = TRUE)
-#'
-#' spatPredict(c(rast1, rast2, rast3), SpatVector, 10000, trainControl, c("ranger", "Rborist"))
+#' terra::plot(result$prediction)
 #'
 #'
 #' # Multiple models, multiple trainControl
 #'
 #' trainControl <- list("ranger" = caret::trainControl(
 #'                                   method = "repeatedcv",
-#'                                   number = 10,
-#'                                   repeats = 10,
+#'                                   number = 2,
+#'                                   repeats = 2,
 #'                                   verboseIter = FALSE,
 #'                                   returnResamp = "final",
 #'                                   savePredictions = "all",
 #'                                   allowParallel = TRUE),
 #'                      "Rborist" = caret::trainControl(
 #'                                    method = "boot",
-#'                                    number = 10,
-#'                                    repeats = 10,
+#'                                    number = 2,
+#'                                    repeats = 2,
 #'                                    verboseIter = FALSE,
 #'                                    returnResamp = "final",
 #'                                    savePredictions = "all",
 #'                                    allowParallel = TRUE)
 #'                                    )
 #'
-#' spatPredict(c(rast1, rast2, rast3), SpatVector, 10000, trainControl, c("ranger", "Rborist"))
-#' }
+#' result <- spatPredict(features = c(SAiVE:::aspect, SAiVE:::solrad, SAiVE:::slope),
+#'   outcome = outcome,
+#'   poly_sample = 100,
+#'   trainControl = trainControl,
+#'   methods = c("ranger", "Rborist"))
+#'
+#' terra::plot(result$prediction)
+#'
 
 spatPredict <- function(features, outcome, poly_sample = 1000, trainControl, methods, fastCompare = TRUE, thinFeatures = TRUE, predict = FALSE, save_path = tempdir())
 {
 
   results <- list() #This will hold model performance measures and a terra pointer to the created spatRaster
-  set.seed(123) #set seed so that results will be reproducible later
 
   if (predict){
     if (!dir.exists(save_path)){
@@ -283,13 +281,13 @@ spatPredict <- function(features, outcome, poly_sample = 1000, trainControl, met
   results$selected_model <- model
   message("Model-specific hyperparameters were adjusted automatically; refer to returned object results$selected_model to see the result.")
 
-  #Test the selected model and print statistics
+  #Test the selected model and save statistics
   PermTest <- stats::predict(model, newdata = Testing)
   results$selected_model_performance <- caret::confusionMatrix(data = PermTest, as.factor(Testing$Type))
 
   if (predict){
     features <- terra::subset(features, names(TrainingDataFrame)[-1]) #remove layers from the raster stack using the pruned TrainingData (post-VSURF, if thinFeatures was set to TRUE)
-    message("Running the model on the full exetent of 'features' and saving to disk...")
+    message("Running the model on the full extent of 'features' and saving to disk...")
     results$prediction <- terra::predict(object=features, model=model, na.rm=TRUE, progress='text', filename=paste0(save_path, "/Prediction_", Sys.Date(), ".tif"), overwrite = TRUE, cores = parallel::detectCores() - 1)
   }
   return(results)

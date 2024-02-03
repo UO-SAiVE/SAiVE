@@ -1,8 +1,8 @@
 #Cannot be tested on GitHub or CRAN because WhiteboxTools also needs to be installed.
 test_that("correct stream network is created", {
-  skip_on_ci()
-  skip_on_cran()
-  rast <- terra::rast(test_path("fixtures/hydroProcess_createStreams_data", "filled_DEM.tif"))
-  res <- createStreams(rast, 100)
-  vdiffr::expect_doppelganger("stream network", terra::plot(res$streams_derived))
+  if (whitebox::check_whitebox_binary()){
+    dem <- hydroProcess(basin_dem, 500, streams, 200) #These are relatively high values for the size of the DEM, but necessary for reproducibility.
+    res <- createStreams(dem, 100)
+    vdiffr::expect_doppelganger("stream network", terra::plot(res$streams_derived))
+  }
 })

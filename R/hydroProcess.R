@@ -22,16 +22,22 @@
 #'
 #' @return A hydro-processed DEM returned as a terra object and saved to disk if `save_path` is not null.
 #' @export
-#' @examples
-#' \dontrun{
+#' @examplesIf whitebox::check_whitebox_binary()
+#'
 #' # Running with terra objects:
-#' DEM <- terra::rast("path_to_DEM")
-#' streams <- terra::vect("path_to_streams")
-#' hydroProcess(DEM = DEM, breach_dist = 500, streams = streams)
+#' res <- hydroProcess(DEM = SAiVE:::elev,
+#'   breach_dist = 500,
+#'   streams = SAiVE:::streams)
+#'
+#' terra::plot(res)
 #'
 #' # Running with file paths:
-#' hydroProcess(DEM = "path_to_dem", breach_dist = 500, streams = "path_to_streams")
-#' }
+#' res <- hydroProcess(DEM = system.file("extdata/dem.tif", package = "SAiVE"),
+#'   breach_dist = 500,
+#'   streams = system.file("extdata/streams.gpkg", package = "SAiVE")
+#'   )
+#'
+#' terra::plot(res)
 #'
 
 hydroProcess <- function(DEM, breach_dist, streams = NULL, burn_dist = 10, save_path = NULL, force_update_wbt = FALSE)
