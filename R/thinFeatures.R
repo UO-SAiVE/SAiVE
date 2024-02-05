@@ -9,6 +9,7 @@
 #' @export
 #'
 #' @examplesIf interactive()
+#'
 #' # thinFeatures on 'permafrost' data set
 #'
 #' data(permafrost)

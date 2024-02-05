@@ -19,6 +19,7 @@ Uses \code{\link[VSURF:VSURF]{VSURF::VSURF()}} to build random forests and remov
 }
 \examples{
 \dontshow{if (interactive()) (if (getRversion() >= "3.4") withAutoprint else force)(\{ # examplesIf}
+
 # thinFeatures on 'permafrost' data set
 
 data(permafrost)

@@ -37,7 +37,8 @@ This function is essentially a convenient wrapper around three WhiteboxTools geo
 \examples{
 \dontshow{if (whitebox::check_whitebox_binary()) (if (getRversion() >= "3.4") withAutoprint else force)(\{ # examplesIf}
 \donttest{
-hydroDEM <- hydroProcess(SAiVE:::elev, 200, SAiVE:::streams)
+
+hydroDEM <- hydroProcess(elev, 200, streams)
 res <- createStreams(hydroDEM, 50)
 
 terra::plot(res$streams_derived)

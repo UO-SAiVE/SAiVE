@@ -64,6 +64,7 @@ When specifying multiple model types in\code{methods}, each model type and \code
 
 \examples{
 \dontshow{if (interactive()) (if (getRversion() >= "3.4") withAutoprint else force)(\{ # examplesIf}
+
 # These examples can take a while to run!
 
 # Single model, single trainControl
@@ -77,10 +78,10 @@ trainControl <- caret::trainControl(
                 savePredictions = "all",
                 allowParallel = TRUE)
 
- outcome <- SAiVE:::permafrost_polygons
+ outcome <- permafrost_polygons
  outcome$Type <- as.factor(outcome$Type)
 
-result <- spatPredict(features = c(SAiVE:::aspect, SAiVE:::solrad, SAiVE:::slope),
+result <- spatPredict(features = c(aspect, solrad, slope),
   outcome = outcome,
   poly_sample = 100,
   trainControl = trainControl,
@@ -109,7 +110,7 @@ trainControl <- list("ranger" = caret::trainControl(
                                    allowParallel = TRUE)
                                    )
 
-result <- spatPredict(features = c(SAiVE:::aspect, SAiVE:::solrad, SAiVE:::slope),
+result <- spatPredict(features = c(aspect, solrad, slope),
   outcome = outcome,
   poly_sample = 100,
   trainControl = trainControl,
