@@ -17,6 +17,7 @@ Checks for the existence of WhiteboxTools in its default directory and installs 
 }
 \examples{
 \dontshow{if (interactive()) (if (getRversion() >= "3.4") withAutoprint else force)(\{ # examplesIf}
+
 #Check if WhiteboxTools binaries are installed. If not, install latest version.
 wbtCheck()
 

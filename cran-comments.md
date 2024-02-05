@@ -7,15 +7,9 @@
 ## Resubmission
 
 This is a resubmission. I have:
-- Fixed grammatical error in DESCRIPTION and changed GitHub to 'GitHub'.
-- Added a link to GitHub repository to description field of DESCRIPTION.
-- Reduced tar.gz file.
-- Improved test coverage.
-- Improved examples, especially reducing run times.
-- Removed all \dontrun calls before examples. I've use examplesIf for those that will cause problems on CRAN or CI environments.
-- Made more targeted use of \donttest, limiting it to only long run time examples.
-- Replaced print()/cat() function calls in favor of message() for easy suppression.
-- Removed calls to set.seed()
+- Modified the description to add a space before URL linking
+- Removed calls to internal package data (SAiVE:::data): all data is now visible and called normally.
+- Found a way to document spatial data that loads as {terra} objects and to use it as exported package data.
 
 ## General comment
 

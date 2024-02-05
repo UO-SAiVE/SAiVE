@@ -3,8 +3,8 @@
 test_that("single model spatPredict works", {
   skip_on_ci()
   skip_on_cran()
-  features <- c(aspect, elev, solrad, slope, veg)
-  outcome <- permafrost_polygons
+  features <- c(terra::rast(system.file("extdata/asp.tif", package = "SAiVE")), terra::rast(system.file("extdata/dem.tif", package = "SAiVE")), terra::rast(system.file("extdata/rad.tif", package = "SAiVE")), terra::rast(system.file("extdata/slp.tif", package = "SAiVE")), terra::rast(system.file("extdata/veg.tif", package = "SAiVE")))
+  outcome <- terra::vect(system.file("extdata/pmfst.gpkg", package = "SAiVE"))
   outcome$Type <- as.factor(outcome$Type)
   trainControl <- caret::trainControl(
     method = "repeatedcv",
@@ -23,8 +23,8 @@ test_that("single model spatPredict works", {
 test_that("multi-model spatPredict works", {
   skip_on_ci()
   skip_on_cran()
-  features <- c(aspect, elev, solrad, slope, veg)
-  outcome <- permafrost_polygons
+  features <- c(terra::rast(system.file("extdata/asp.tif", package = "SAiVE")), terra::rast(system.file("extdata/dem.tif", package = "SAiVE")), terra::rast(system.file("extdata/rad.tif", package = "SAiVE")), terra::rast(system.file("extdata/slp.tif", package = "SAiVE")), terra::rast(system.file("extdata/veg.tif", package = "SAiVE")))
+  outcome <- terra::vect(system.file("extdata/pmfst.gpkg", package = "SAiVE"))
   outcome$Type <- as.factor(outcome$Type)
   trainControl <- list("ranger" = caret::trainControl(
     method = "repeatedcv",

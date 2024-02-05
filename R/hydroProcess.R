@@ -23,11 +23,12 @@
 #' @return A hydro-processed DEM returned as a terra object and saved to disk if `save_path` is not null.
 #' @export
 #' @examplesIf whitebox::check_whitebox_binary()
+#' \donttest{
 #'
 #' # Running with terra objects:
-#' res <- hydroProcess(DEM = SAiVE:::elev,
+#' res <- hydroProcess(DEM = elev,
 #'   breach_dist = 500,
-#'   streams = SAiVE:::streams)
+#'   streams = streams)
 #'
 #' terra::plot(res)
 #'
@@ -38,7 +39,7 @@
 #'   )
 #'
 #' terra::plot(res)
-#'
+#' }
 
 hydroProcess <- function(DEM, breach_dist, streams = NULL, burn_dist = 10, save_path = NULL, force_update_wbt = FALSE)
 {

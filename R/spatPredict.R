@@ -36,6 +36,7 @@
 #' @return A list with three to five elements: the outcome of the VSURF variable selection process, details of the fitted model, model performance statistics, model performance comparison (if methods includes more than one model), and the final predicted raster (if predict = TRUE). If applicable, the predicted raster is written to disk.
 #' @export
 #' @examplesIf interactive()
+#'
 #' # These examples can take a while to run!
 #'
 #' # Single model, single trainControl
@@ -49,10 +50,10 @@
 #'                 savePredictions = "all",
 #'                 allowParallel = TRUE)
 #'
-#'  outcome <- SAiVE:::permafrost_polygons
+#'  outcome <- permafrost_polygons
 #'  outcome$Type <- as.factor(outcome$Type)
 #'
-#' result <- spatPredict(features = c(SAiVE:::aspect, SAiVE:::solrad, SAiVE:::slope),
+#' result <- spatPredict(features = c(aspect, solrad, slope),
 #'   outcome = outcome,
 #'   poly_sample = 100,
 #'   trainControl = trainControl,
@@ -81,7 +82,7 @@
 #'                                    allowParallel = TRUE)
 #'                                    )
 #'
-#' result <- spatPredict(features = c(SAiVE:::aspect, SAiVE:::solrad, SAiVE:::slope),
+#' result <- spatPredict(features = c(aspect, solrad, slope),
 #'   outcome = outcome,
 #'   poly_sample = 100,
 #'   trainControl = trainControl,

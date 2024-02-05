@@ -41,11 +41,12 @@ Relies on two WhiteboxTools functions: \code{\link[whitebox:wbt_fill_single_cell
 }
 \examples{
 \dontshow{if (whitebox::check_whitebox_binary()) (if (getRversion() >= "3.4") withAutoprint else force)(\{ # examplesIf}
+\donttest{
 
 # Running with terra objects:
-res <- hydroProcess(DEM = SAiVE:::elev,
+res <- hydroProcess(DEM = elev,
   breach_dist = 500,
-  streams = SAiVE:::streams)
+  streams = streams)
 
 terra::plot(res)
 
@@ -56,6 +57,7 @@ res <- hydroProcess(DEM = system.file("extdata/dem.tif", package = "SAiVE"),
   )
 
 terra::plot(res)
+}
 \dontshow{\}) # examplesIf}
 }
 \author{

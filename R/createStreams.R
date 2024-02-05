@@ -19,9 +19,11 @@
 #'
 #' @return A raster representation of streams and, if requested, a vector representation of streams. Returned as terra objects and saved to disk if `save_path` is not null.
 #' @export
+#'
 #' @examplesIf whitebox::check_whitebox_binary()
-#' \donttest{
-#' hydroDEM <- hydroProcess(SAiVE:::elev, 200, SAiVE:::streams)
+#'\donttest{
+#'
+#' hydroDEM <- hydroProcess(elev, 200, streams)
 #' res <- createStreams(hydroDEM, 50)
 #'
 #' terra::plot(res$streams_derived)

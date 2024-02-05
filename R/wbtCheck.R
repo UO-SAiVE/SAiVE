@@ -10,6 +10,7 @@
 #' @return Returns the version number of the installed binaries and (if necessary) installs WhiteboxTools in its default location.
 #' @export
 #' @examplesIf interactive()
+#'
 #' #Check if WhiteboxTools binaries are installed. If not, install latest version.
 #' wbtCheck()
 #'

@@ -58,7 +58,7 @@ NOTE 2: ESRI shapefiles, on which the Whitebox Tools functions depend, truncate 
 
 NOTE 3: If you are have already run this tool and are using a DEM in the same directory as last time, you only need to specify the DEM and the points (and, optionally, a projection for the points output). Operations using the optional streams shapefile and generating flow accumulation direction, and the artificial streams raster do not need to be repeated unless you want to use a different DEM or streams shapefile.
 
-NOTE 4: This function is very memory (RAM) intensive. You'll want at least 16GB of RAM, and to ensure that most of it is free. If you get an error such as 'cannot allocate xxxxx bytes', you probably don't have the resources to run the tool. The WhiteboxTools functions are memory hungry: all rasters are un-compressed and converted to 64-bit float type before starting work, and there needs to be room to store more than twice that uncompressed raster size in memory. Example: for the Yukon at a resolution of 16.9 meters (the highest resolution CDEM) the tool attempts to allocate 36GB of memory.
+NOTE 4: This function is very memory (RAM) intensive. You'll want at least 16GB of RAM, and to ensure that most of it is free. If you get an error such as 'cannot allocate xxxxx bytes', you probably don't have the resources to run the tool. All rasters are un-compressed and converted to 64-bit float type before starting work, and there needs to be room to store more than twice that uncompressed raster size in memory.
 }
 \details{
 This function uses software from the Whitebox geospatial analysis package, built by Prof. John Lindsay. Refer to \href{https://www.whiteboxgeo.com/manual/wbt_book/intro.html}{this link} for more information.
@@ -79,6 +79,7 @@ Be aware that this part of the function should ideally be used with a "simplifie
 }
 \examples{
 \dontshow{if (whitebox::check_whitebox_binary()) (if (getRversion() >= "3.4") withAutoprint else force)(\{ # examplesIf}
+
 \donttest{
 # Must be run with file paths as well as a save_path
 
@@ -94,7 +95,7 @@ basins <- drainageBasins(DEM = paste0(tempdir(), "/basin_rast.tif"),
   breach_dist = 500,
   save_path = tempdir())
 
-  terra::plot(basins$delineated_basins)
+terra::plot(basins$delineated_basins)
 }
 \dontshow{\}) # examplesIf}
 }
