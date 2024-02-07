@@ -6,10 +6,11 @@
 
 ## Resubmission
 
-This is a resubmission. I have:
-- Modified the description to add a space before URL linking
-- Removed calls to internal package data (SAiVE:::data): all data is now visible and called normally.
-- Found a way to document spatial data that loads as {terra} objects and to use it as exported package data.
+This is yet another resubmission. I have:
+- Removed function defaults that set save paths/directories.
+- Added options to limit number of cores.
+- Made examples run on 2 cores at most.
+- Found and fixed a few typos not previously caught.
 
 ## General comment
 

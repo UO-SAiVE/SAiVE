@@ -31,7 +31,8 @@
 #' @param fastCompare If specifying multiple model types in `methods` or one model with multiple different `trainControl` objects, should the points in `outcome` be sub-sampled for the model comparison step? The selected model will be trained on the full `outcome` data set after selection. TRUE/FALSE. This only applies if `methods` is length > 3 and if `outcome` has more than 4000 rows.
 #' @param thinFeatures Should random forest selection using [VSURF::VSURF()] be used in an attempt to remove irrelevant variables?
 #' @param predict TRUE will apply the selected model to the full extent of `features` and return a raster saved to `save_path`.
-#' @param save_path The path (folder) to which you wish to save the predicted raster. Not used unless `predict = TRUE`. If you don't want to save anywhere permanent point to the temp directory using tempdir().
+#' @param n.cores The maximum number of cores to use. Leave NULL to use all cores minus 1.
+#' @param save_path The path (folder) to which you wish to save the predicted raster. Not used unless `predict = TRUE`.
 #'
 #' @return A list with three to five elements: the outcome of the VSURF variable selection process, details of the fitted model, model performance statistics, model performance comparison (if methods includes more than one model), and the final predicted raster (if predict = TRUE). If applicable, the predicted raster is written to disk.
 #' @export
@@ -57,7 +58,8 @@
 #'   outcome = outcome,
 #'   poly_sample = 100,
 #'   trainControl = trainControl,
-#'   methods = "ranger")
+#'   methods = "ranger",
+#'   n.cores = 2)
 #'
 #' terra::plot(result$prediction)
 #'
@@ -86,21 +88,31 @@
 #'   outcome = outcome,
 #'   poly_sample = 100,
 #'   trainControl = trainControl,
-#'   methods = c("ranger", "Rborist"))
+#'   methods = c("ranger", "Rborist"),
+#'   n.cores = 2)
 #'
 #' terra::plot(result$prediction)
 #'
 
-spatPredict <- function(features, outcome, poly_sample = 1000, trainControl, methods, fastCompare = TRUE, thinFeatures = TRUE, predict = FALSE, save_path = tempdir())
+spatPredict <- function(features, outcome, poly_sample = 1000, trainControl, methods, fastCompare = TRUE, thinFeatures = TRUE, predict = FALSE, n.cores = NULL, save_path = NULL)
 {
 
-  results <- list() #This will hold model performance measures and a terra pointer to the created spatRaster
+  cores <- parallel::detectCores()
+  if (!is.null(n.cores)){
+    if (cores < n.cores){
+      n.cores <- cores - 1
+    }
+  } else {
+    n.cores <- cores - 1
+  }
 
-  if (predict){
+  if (!is.null(save_path)){
     if (!dir.exists(save_path)){
-      stop("The specified directory does not exist. Please create it before pointing to it.")
+      stop("The specified directory does not exist. Please create it before pointing to it, or run the function without a save path.")
     }
   }
+
+  results <- list() #This will hold model performance measures and a terra pointer to the created spatRaster
 
   #If multiple models and multiple trainControls passed as arguments, check that names of 'trainControl' list matches those of 'methods'
   if (length(methods) > 1){
@@ -174,7 +186,7 @@ spatPredict <- function(features, outcome, poly_sample = 1000, trainControl, met
   if (thinFeatures){
     message("Running VSURF algorithm to select only relevant variables...")
     tryCatch({
-      res <- thinFeatures(TrainingDataFrame, names(TrainingDataFrame)[1])
+      res <- thinFeatures(TrainingDataFrame, names(TrainingDataFrame)[1], n.cores = n.cores)
       results$VSURF_outcome <- res$VSURF_outcome
       TrainingDataFrame <- TrainingDataFrame[ , names(res$subset_data)]
     }, error = function(e){
@@ -192,7 +204,7 @@ spatPredict <- function(features, outcome, poly_sample = 1000, trainControl, met
 
   #Train the model(s) using parallel computing
   results$failed_methods <- character()
-  cluster <- parallel::makePSOCKcluster(parallel::detectCores() - 1)
+  cluster <- parallel::makePSOCKcluster(n.cores)
   doParallel::registerDoParallel(cluster)
   if (length(methods) > 1){
     models <- list()
@@ -289,7 +301,7 @@ spatPredict <- function(features, outcome, poly_sample = 1000, trainControl, met
   if (predict){
     features <- terra::subset(features, names(TrainingDataFrame)[-1]) #remove layers from the raster stack using the pruned TrainingData (post-VSURF, if thinFeatures was set to TRUE)
     message("Running the model on the full extent of 'features' and saving to disk...")
-    results$prediction <- terra::predict(object=features, model=model, na.rm=TRUE, progress='text', filename=paste0(save_path, "/Prediction_", Sys.Date(), ".tif"), overwrite = TRUE, cores = parallel::detectCores() - 1)
+    results$prediction <- terra::predict(object=features, model=model, na.rm=TRUE, progress='text', filename = if(!is.null(save_path)) paste0(save_path, "/Prediction_", Sys.Date(), ".tif") else "", overwrite = TRUE, cores = n.cores)
   }
   return(results)
 }

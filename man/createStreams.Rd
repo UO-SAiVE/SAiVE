@@ -9,7 +9,8 @@ createStreams(
   threshold,
   vector = NULL,
   save_path = NULL,
-  force_update_wbt = FALSE
+  force_update_wbt = FALSE,
+  n.cores = NULL
 )
 }
 \arguments{
@@ -22,6 +23,8 @@ createStreams(
 \item{save_path}{An optional path in which to save the newly created stream network. If left NULL will save it in the same directory as the provided DEM or, if the DEM is a terra object, return only terra objects.}
 
 \item{force_update_wbt}{Whitebox Tools is by default only downloaded if it cannot be found on the computer, and no check are performed to ensure the local version is current. Set to TRUE if you know that there is a new version and you would like to use it.}
+
+\item{n.cores}{The maximum number of cores to use. Leave NULL to use all cores minus 1.}
 }
 \value{
 A raster representation of streams and, if requested, a vector representation of streams. Returned as terra objects and saved to disk if \code{save_path} is not null.
@@ -38,8 +41,8 @@ This function is essentially a convenient wrapper around three WhiteboxTools geo
 \dontshow{if (whitebox::check_whitebox_binary()) (if (getRversion() >= "3.4") withAutoprint else force)(\{ # examplesIf}
 \donttest{
 
-hydroDEM <- hydroProcess(elev, 200, streams)
-res <- createStreams(hydroDEM, 50)
+hydroDEM <- hydroProcess(elev, 200, streams, n.cores = 2)
+res <- createStreams(hydroDEM, 50, n.cores = 2)
 
 terra::plot(res$streams_derived)
 }

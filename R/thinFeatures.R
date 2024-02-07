@@ -4,6 +4,7 @@
 #'
 #' @param data A data.frame containing a column for the outcome variable and *n* columns for predictor variables.
 #' @param outcome_col The name of the outcome variable column.
+#' @param n.cores The maximum number of cores to use. Leave NULL to use all cores minus 1.
 #'
 #' @return A list of two data.frames: the outcome of the VSURF algorithm and the data after applying the VSURF results (rows removed if applicable)
 #' @export
@@ -13,13 +14,13 @@
 #' # thinFeatures on 'permafrost' data set
 #'
 #' data(permafrost)
-#' res <- thinFeatures(permafrost, "Type")
+#' res <- thinFeatures(permafrost, "Type", n.cores = 2)
 #'
-#' # Results will vary due to inherent radomness of random forests!
+#' # Results will vary due to inherent randomness of random forests!
 #'
 
 
-thinFeatures <- function(data, outcome_col) {
+thinFeatures <- function(data, outcome_col, n.cores = NULL) {
 
   if (!inherits(data, "data.frame")){
     stop("'data' can only be a data.frame.")
@@ -29,7 +30,7 @@ thinFeatures <- function(data, outcome_col) {
   }
 
   #check and install if package ranger is not installed
-  rlang::check_installed("ranger", reason = "Package ranger is required to select + retain only relevant variables")
+  rlang::check_installed("ranger", reason = " required to select + retain only relevant variables")
 
   col <- which(names(data) == outcome_col)
   if (col != 1){
@@ -37,8 +38,18 @@ thinFeatures <- function(data, outcome_col) {
   }
 
   results <- list()
+
+  cores <- parallel::detectCores()
+  if (!is.null(n.cores)){
+    if (cores < n.cores){
+      n.cores <- cores - 1
+    }
+  } else {
+    n.cores <- cores - 1
+  }
+
   tryCatch({
-    VSURF.result <- VSURF::VSURF(data[,2:ncol(data)], data[,1], RFimplem = "ranger", parallel = TRUE, ncores = parallel::detectCores() - 1, clusterType = "PSOCK") #This takes a while, get comfortable or find something else to do
+    VSURF.result <- VSURF::VSURF(data[,2:ncol(data)], data[,1], RFimplem = "ranger", parallel = TRUE, ncores = n.cores, clusterType = "PSOCK") #This takes a while, get comfortable or find something else to do
     ordered.selected <- names(data[,2:ncol(data)])[VSURF.result$varselect.thres]
     ordered.importance <- VSURF.result$imp.varselect.thres
     results$VSURF_outcome <- data.frame(Feature = ordered.selected,

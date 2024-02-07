@@ -10,11 +10,12 @@ hydroProcess(
   streams = NULL,
   burn_dist = 10,
   save_path = NULL,
+  n.cores = NULL,
   force_update_wbt = FALSE
 )
 }
 \arguments{
-\item{DEM}{The path to a digital elevation model file with .tif extension, or a terra spatRaster object.}
+\item{DEM}{The path to a digital elevation raster file with .tif extension, or a terra spatRaster object.}
 
 \item{breach_dist}{The max radius (in raster cells) in which to search for a path to breach depressions, passed to \code{\link[whitebox:wbt_breach_depressions_least_cost]{whitebox::wbt_breach_depressions_least_cost()}}. This value should be high to ensure all depressions are breached, keeping in mind that greater distance = greater computing time. Note that the DEM is \emph{not} breached in order of lowest elevation to greatest, nor is it breached sequentially (order is unknown, but the raster is presumably searched in some grid pattern for depressions). This means that flow paths may need to cross multiple depressions, especially in low relief areas.}
 
@@ -23,6 +24,8 @@ hydroProcess(
 \item{burn_dist}{The number of units (in DEM units) to use for burning-in the stream network.}
 
 \item{save_path}{An optional path in which to save the processed DEM. If left NULL will save it in the same directory as the provided DEM or, if the DEM is a terra object, return only terra objects.}
+
+\item{n.cores}{The maximum number of cores to use. Leave NULL to use all cores minus 1.}
 
 \item{force_update_wbt}{Whitebox Tools is by default only downloaded if it cannot be found on the computer, and no check are performed to ensure the local version is current. Set to TRUE if you know that there is a new version and you would like to use it.}
 }
@@ -46,15 +49,16 @@ Relies on two WhiteboxTools functions: \code{\link[whitebox:wbt_fill_single_cell
 # Running with terra objects:
 res <- hydroProcess(DEM = elev,
   breach_dist = 500,
-  streams = streams)
+  streams = streams,
+  n.cores = 2)
 
 terra::plot(res)
 
 # Running with file paths:
 res <- hydroProcess(DEM = system.file("extdata/dem.tif", package = "SAiVE"),
   breach_dist = 500,
-  streams = system.file("extdata/streams.gpkg", package = "SAiVE")
-  )
+  streams = system.file("extdata/streams.gpkg", package = "SAiVE"),
+  n.cores = 2)
 
 terra::plot(res)
 }
