@@ -13,7 +13,8 @@ spatPredict(
   fastCompare = TRUE,
   thinFeatures = TRUE,
   predict = FALSE,
-  save_path = tempdir()
+  n.cores = NULL,
+  save_path = NULL
 )
 }
 \arguments{
@@ -33,7 +34,9 @@ spatPredict(
 
 \item{predict}{TRUE will apply the selected model to the full extent of \code{features} and return a raster saved to \code{save_path}.}
 
-\item{save_path}{The path (folder) to which you wish to save the predicted raster. Not used unless \code{predict = TRUE}. If you don't want to save anywhere permanent point to the temp directory using tempdir().}
+\item{n.cores}{The maximum number of cores to use. Leave NULL to use all cores minus 1.}
+
+\item{save_path}{The path (folder) to which you wish to save the predicted raster. Not used unless \code{predict = TRUE}.}
 }
 \value{
 A list with three to five elements: the outcome of the VSURF variable selection process, details of the fitted model, model performance statistics, model performance comparison (if methods includes more than one model), and the final predicted raster (if predict = TRUE). If applicable, the predicted raster is written to disk.
@@ -85,7 +88,8 @@ result <- spatPredict(features = c(aspect, solrad, slope),
   outcome = outcome,
   poly_sample = 100,
   trainControl = trainControl,
-  methods = "ranger")
+  methods = "ranger",
+  n.cores = 2)
 
 terra::plot(result$prediction)
 
@@ -114,7 +118,8 @@ result <- spatPredict(features = c(aspect, solrad, slope),
   outcome = outcome,
   poly_sample = 100,
   trainControl = trainControl,
-  methods = c("ranger", "Rborist"))
+  methods = c("ranger", "Rborist"),
+  n.cores = 2)
 
 terra::plot(result$prediction)
 \dontshow{\}) # examplesIf}

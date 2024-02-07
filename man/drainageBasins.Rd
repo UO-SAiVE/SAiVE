@@ -5,6 +5,7 @@
 \title{Watershed/basin delineation}
 \usage{
 drainageBasins(
+  save_path,
   DEM,
   streams = NULL,
   breach_dist = 10000,
@@ -15,11 +16,13 @@ drainageBasins(
   projection = NULL,
   snap = "nearest",
   snap_dist = 200,
-  save_path = "choose",
-  force_update_wbt = FALSE
+  force_update_wbt = FALSE,
+  n.cores = NULL
 )
 }
 \arguments{
+\item{save_path}{The directory where you want the output shapefiles saved.}
+
 \item{DEM}{The path to a DEM including extension from which to delineate watersheds/catchments. Must be in .tif format. Derived layers such as flow accumulation, flow direction, and streams will inherit the DEM coordinate reference system.}
 
 \item{streams}{Optionally, the path to the polylines shapefile/geopackage containing lines, which can be used to improve accuracy when using poor quality DEMs. If this shapefile is the only input parameter being modified from previous runs (i.e. you've found a new/better streams shapefile but the DEM is unchanged) then specify a shapefile or geopackage lines file here and overwrite = TRUE.}
@@ -40,9 +43,9 @@ drainageBasins(
 
 \item{snap_dist}{The search radius within which to snap points to streams. Snapping method depends on 'snap' parameter. Note that distance units will match the projection, so probably best to work on a meter grid.}
 
-\item{save_path}{The directory path where you want the output shapefiles saved.}
-
 \item{force_update_wbt}{Whitebox Tools is by default only downloaded if it cannot be found on the computer, and no check are performed to ensure the local version is current. Set to TRUE if you know that there is a new version and you would like to use it.}
+
+\item{n.cores}{The maximum number of cores to use. Leave NULL to use all cores minus 1.}
 }
 \value{
 A list of terra objects. If points are specified: delineated drainages, pour points as provided, snapped pour points, and the derived streams network. If no points: flow accumulation and direction rasters, and the derived streams network. If points specified, also saved to disk: an ESRI shapefile for each drainage basin, plus the associated snapped pour point and the point as provided and a shapefiles for all basins/points together. In all cases the created or discovered rasters will be in the same folder as the DEM.
@@ -88,12 +91,13 @@ Be aware that this part of the function should ideally be used with a "simplifie
 file.copy(system.file("extdata/basin_rast.tif", package = "SAiVE"),
   paste0(tempdir(), "/basin_rast.tif"))
 
-basins <- drainageBasins(DEM = paste0(tempdir(), "/basin_rast.tif"),
+basins <- drainageBasins(save_path = tempdir(),
+  DEM = paste0(tempdir(), "/basin_rast.tif"),
   streams = system.file("extdata/streams.gpkg", package = "SAiVE"),
   points = system.file("extdata/basin_pts.gpkg", package = "SAiVE"),
   points_name_col = "ID",
   breach_dist = 500,
-  save_path = tempdir())
+  n.cores = 2)
 
 terra::plot(basins$delineated_basins)
 }

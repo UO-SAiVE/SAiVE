@@ -27,6 +27,7 @@
 #' ## Using a streams shapefile to burn-in depressions to the DEM:
 #' Be aware that this part of the function should ideally be used with a "simplified" streams shapefile. In particular, avoid or pre-process stream shapefiles that represent side-channels, as these will burn-in several parallel tracks to the DEM. ESRI has a tool called "simplify hydrology lines" which is great if you can ever get it to work, and WhiteboxTools has functions [whitebox::wbt_remove_short_streams()] to trim the streams raster, and [whitebox::wbt_repair_stream_vector_topology()] to help in converting a corrected streams vector to raster in the first place.
 #'
+#' @param save_path The directory where you want the output shapefiles saved.
 #' @param DEM The path to a DEM including extension from which to delineate watersheds/catchments. Must be in .tif format. Derived layers such as flow accumulation, flow direction, and streams will inherit the DEM coordinate reference system.
 #' @param streams Optionally, the path to the polylines shapefile/geopackage containing lines, which can be used to improve accuracy when using poor quality DEMs. If this shapefile is the only input parameter being modified from previous runs (i.e. you've found a new/better streams shapefile but the DEM is unchanged) then specify a shapefile or geopackage lines file here and overwrite = TRUE.
 #' @param breach_dist The max radius (in raster cells) for which to search for a path to breach depressions, passed to [whitebox::wbt_breach_depressions_least_cost()]. This value should be high to ensure all depressions are breached. Note that the DEM is *not* breached in order of lowest elevation to greatest, nor is it breached sequentially (order is unknown, but the raster is presumably searched in some grid pattern for depressions). This means that flow paths may need to cross multiple depressions, especially in low relief areas.
@@ -37,8 +38,8 @@
 #' @param projection Optionally, a projection string in the form "epsg:3579" (find them [here](https://epsg.io/)). The derived watersheds and point output layers will use this projection. If NULL the projection of the points will be used.
 #' @param snap Snap to the "nearest" derived (calculated) stream, or to the "greatest" flow accumulation cell within the snap distance? Beware that "greatest" will move the point downstream by up to the 'snap_dist' specified, while nearest might snap to the wrong stream.
 #' @param snap_dist The search radius within which to snap points to streams. Snapping method depends on 'snap' parameter. Note that distance units will match the projection, so probably best to work on a meter grid.
-#' @param save_path The directory path where you want the output shapefiles saved.
 #' @param force_update_wbt Whitebox Tools is by default only downloaded if it cannot be found on the computer, and no check are performed to ensure the local version is current. Set to TRUE if you know that there is a new version and you would like to use it.
+#' @param n.cores The maximum number of cores to use. Leave NULL to use all cores minus 1.
 #'
 #' @return A list of terra objects. If points are specified: delineated drainages, pour points as provided, snapped pour points, and the derived streams network. If no points: flow accumulation and direction rasters, and the derived streams network. If points specified, also saved to disk: an ESRI shapefile for each drainage basin, plus the associated snapped pour point and the point as provided and a shapefiles for all basins/points together. In all cases the created or discovered rasters will be in the same folder as the DEM.
 #'
@@ -53,23 +54,23 @@
 #' file.copy(system.file("extdata/basin_rast.tif", package = "SAiVE"),
 #'   paste0(tempdir(), "/basin_rast.tif"))
 #'
-#' basins <- drainageBasins(DEM = paste0(tempdir(), "/basin_rast.tif"),
+#' basins <- drainageBasins(save_path = tempdir(),
+#'   DEM = paste0(tempdir(), "/basin_rast.tif"),
 #'   streams = system.file("extdata/streams.gpkg", package = "SAiVE"),
 #'   points = system.file("extdata/basin_pts.gpkg", package = "SAiVE"),
 #'   points_name_col = "ID",
 #'   breach_dist = 500,
-#'   save_path = tempdir())
+#'   n.cores = 2)
 #'
 #' terra::plot(basins$delineated_basins)
 #' }
 
 
-drainageBasins <- function(DEM, streams = NULL, breach_dist = 10000, threshold = 500, overwrite = FALSE, points = NULL, points_name_col = NULL, projection = NULL, snap = "nearest", snap_dist = 200, save_path = "choose", force_update_wbt = FALSE) {
+drainageBasins <- function(save_path, DEM, streams = NULL, breach_dist = 10000, threshold = 500, overwrite = FALSE, points = NULL, points_name_col = NULL, projection = NULL, snap = "nearest", snap_dist = 200, force_update_wbt = FALSE, n.cores = NULL) {
 
   #initial checks
   rlang::check_installed("whitebox", reason = "required to use function drainageBasins") #This is here because whitebox is not a 'depends' of this package; it is only necessary for this function and is therefore in "suggests"
   wbtCheck(force = force_update_wbt)  #Check whitebox binaries existence and version, install if necessary or if force_update_wbt = TRUE.
-
 
   if (!(snap %in% c("nearest", "greatest"))){
     stop("The parameter 'snap' must be one of 'nearest' or 'greatest'.")
@@ -88,10 +89,21 @@ drainageBasins <- function(DEM, streams = NULL, breach_dist = 10000, threshold =
     }
   }
 
+  # Change whitebox max core options to user request
+  cores <- parallel::detectCores()
+  if (!is.null(n.cores)){
+    if (cores < n.cores){
+      n.cores <- cores - 1
+    }
+    old.wbt.opts <- as.integer(Sys.getenv("R_WHITEBOX_MAX_PROCS", unset = NA))
+    Sys.setenv("R_WHITEBOX_MAX_PROCS" = n.cores)
+    on.exit(if (is.na(old.wbt.opts)) Sys.unsetenv("R_WHITEBOX_MAX_PROCS") else Sys.setenv("R_WHITEBOX_MAX_PROCS" = old.wbt.opts), add = TRUE)
+  }
+
   #change terra options to allow greater RAM fraction use
   old <- terra::terraOptions(print = FALSE)
   terra::terraOptions(memfrac = 0.9)
-  on.exit(terra::terraOptions(memfrac = old$memfrac))
+  on.exit(terra::terraOptions(memfrac = old$memfrac), add = TRUE)
 
   if (!is.null(points)){
     points <- suppressWarnings(terra::vect(points)) #load the points
@@ -277,7 +289,6 @@ drainageBasins <- function(DEM, streams = NULL, breach_dist = 10000, threshold =
       result <- list(streams_derived = streams_derived, d8_flow_dir = d8pntr)
       message(crayon::blue$bold("Function complete: derived flow direction, and streams rasters are returned and saved to disk."))
     }
-
   }
 
   return(result)

@@ -1,7 +1,7 @@
 Type: Package
 Package: SAiVE
 Title: Functions Used for SAiVE Group Research, Collaborations, and Publications
-Version: 1.0.3
+Version: 1.0.4
 Authors@R: 
     person("Ghislain", "de Laplante", , "ghislain.delaplante@yukon.ca", role = c("aut", "cre", "cph"),
            comment = c(ORCID = "0000-0002-5093-9185"))

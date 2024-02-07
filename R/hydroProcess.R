@@ -13,11 +13,12 @@
 #' Relies on two WhiteboxTools functions: [whitebox::wbt_fill_single_cell_pits()] and [whitebox::wbt_breach_depressions_least_cost()]. If the parameter `streams` is specified, a depression is burned into the DEM after running fill_single_cell_pits and before breaching depressions.
 #'
 #'
-#' @param DEM The path to a digital elevation model file with .tif extension, or a terra spatRaster object.
+#' @param DEM The path to a digital elevation raster file with .tif extension, or a terra spatRaster object.
 #' @param breach_dist The max radius (in raster cells) in which to search for a path to breach depressions, passed to [whitebox::wbt_breach_depressions_least_cost()]. This value should be high to ensure all depressions are breached, keeping in mind that greater distance = greater computing time. Note that the DEM is *not* breached in order of lowest elevation to greatest, nor is it breached sequentially (order is unknown, but the raster is presumably searched in some grid pattern for depressions). This means that flow paths may need to cross multiple depressions, especially in low relief areas.
 #' @param streams Optionally, the path to the polylines shapefile or geopackage file containing streams, which can be used to improve hydrological accuracy when using poor quality DEMs but decent accuracy stream networks.
 #' @param burn_dist The number of units (in DEM units) to use for burning-in the stream network.
 #' @param save_path An optional path in which to save the processed DEM. If left NULL will save it in the same directory as the provided DEM or, if the DEM is a terra object, return only terra objects.
+#' @param n.cores The maximum number of cores to use. Leave NULL to use all cores minus 1.
 #' @param force_update_wbt Whitebox Tools is by default only downloaded if it cannot be found on the computer, and no check are performed to ensure the local version is current. Set to TRUE if you know that there is a new version and you would like to use it.
 #'
 #' @return A hydro-processed DEM returned as a terra object and saved to disk if `save_path` is not null.
@@ -28,25 +29,37 @@
 #' # Running with terra objects:
 #' res <- hydroProcess(DEM = elev,
 #'   breach_dist = 500,
-#'   streams = streams)
+#'   streams = streams,
+#'   n.cores = 2)
 #'
 #' terra::plot(res)
 #'
 #' # Running with file paths:
 #' res <- hydroProcess(DEM = system.file("extdata/dem.tif", package = "SAiVE"),
 #'   breach_dist = 500,
-#'   streams = system.file("extdata/streams.gpkg", package = "SAiVE")
-#'   )
+#'   streams = system.file("extdata/streams.gpkg", package = "SAiVE"),
+#'   n.cores = 2)
 #'
 #' terra::plot(res)
 #' }
 
-hydroProcess <- function(DEM, breach_dist, streams = NULL, burn_dist = 10, save_path = NULL, force_update_wbt = FALSE)
+hydroProcess <- function(DEM, breach_dist, streams = NULL, burn_dist = 10, save_path = NULL, n.cores = NULL, force_update_wbt = FALSE)
 {
 
   #initial checks
   rlang::check_installed("whitebox", reason = "required to use function drainageBasins") #This is here because whitebox is not a 'depends' of this package; it is only necessary for this function and is therefore in "suggests"
   wbtCheck(force = force_update_wbt)  #Check whitebox binaries existence and version, install if necessary or if force_update_wbt = TRUE.
+
+  # Change whitebox max core options to user request
+  cores <- parallel::detectCores()
+  if (!is.null(n.cores)){
+    if (cores < n.cores){
+      n.cores <- cores - 1
+    }
+    old.wbt.opts <- as.integer(Sys.getenv("R_WHITEBOX_MAX_PROCS", unset = NA))
+    Sys.setenv("R_WHITEBOX_MAX_PROCS" = n.cores)
+    on.exit(if (is.na(old.wbt.opts)) Sys.unsetenv("R_WHITEBOX_MAX_PROCS") else Sys.setenv("R_WHITEBOX_MAX_PROCS" = old.wbt.opts), add = TRUE)
+  }
 
   if (inherits(DEM, "SpatRaster")){
     temp_dir <- paste0(tempdir(), "/hydroProcess")

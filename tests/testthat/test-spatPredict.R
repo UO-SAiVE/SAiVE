@@ -15,7 +15,7 @@ test_that("single model spatPredict works", {
     savePredictions = "all",
     allowParallel = TRUE)
 
-  res <- spatPredict(features, outcome, 100, trainControl, methods = "ranger", thinFeatures = FALSE, predict = TRUE)
+  res <- spatPredict(features, outcome, 100, trainControl, methods = "ranger", thinFeatures = FALSE, predict = TRUE, n.cores = 2)
   expect_named(res, c("training_df", "testing_df", "failed_methods", "selected_model", "selected_model_performance", "prediction"))
   vdiffr::expect_doppelganger("permafrost prediction single model", terra::plot(res$prediction))
 })
@@ -43,7 +43,7 @@ test_that("multi-model spatPredict works", {
       allowParallel = TRUE)
   )
 
-  res <- suppressWarnings(spatPredict(features, outcome, 100, trainControl, methods = c("ranger", "Rborist"), thinFeatures = FALSE, predict = TRUE))
+  res <- suppressWarnings(spatPredict(features, outcome, 100, trainControl, methods = c("ranger", "Rborist"), thinFeatures = FALSE, predict = TRUE, n.cores = 2))
   expect_named(res, c("training_df", "testing_df", "failed_methods", "trained_models_performance", "selected_model", "selected_model_performance", "prediction"))
   vdiffr::expect_doppelganger("permafrost prediction two models", terra::plot(res$prediction))
 })

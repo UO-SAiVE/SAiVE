@@ -16,6 +16,7 @@
 #' @param vector Output file specifications. NULL for no vector file saved to disk, "gpkg" for a geopackage file, "shp" for a shapefile.
 #' @param save_path An optional path in which to save the newly created stream network. If left NULL will save it in the same directory as the provided DEM or, if the DEM is a terra object, return only terra objects.
 #' @param force_update_wbt Whitebox Tools is by default only downloaded if it cannot be found on the computer, and no check are performed to ensure the local version is current. Set to TRUE if you know that there is a new version and you would like to use it.
+#' @param n.cores The maximum number of cores to use. Leave NULL to use all cores minus 1.
 #'
 #' @return A raster representation of streams and, if requested, a vector representation of streams. Returned as terra objects and saved to disk if `save_path` is not null.
 #' @export
@@ -23,18 +24,28 @@
 #' @examplesIf whitebox::check_whitebox_binary()
 #'\donttest{
 #'
-#' hydroDEM <- hydroProcess(elev, 200, streams)
-#' res <- createStreams(hydroDEM, 50)
+#' hydroDEM <- hydroProcess(elev, 200, streams, n.cores = 2)
+#' res <- createStreams(hydroDEM, 50, n.cores = 2)
 #'
 #' terra::plot(res$streams_derived)
 #' }
 
-createStreams <- function(DEM, threshold, vector = NULL, save_path = NULL, force_update_wbt = FALSE){
+createStreams <- function(DEM, threshold, vector = NULL, save_path = NULL, force_update_wbt = FALSE, n.cores = NULL){
 
   #initial checks
   rlang::check_installed("whitebox", reason = "required to use function drainageBasins") #This is here because whitebox is not a 'depends' of this package; it is only necessary for this function and is therefore in "suggests"
   wbtCheck(force = force_update_wbt) #Check whitebox binaries existence and version, install if necessary or if force_update_wbt = TRUE.
 
+  # Change whitebox max core options to user request
+  cores <- parallel::detectCores()
+  if (!is.null(n.cores)){
+    if (cores < n.cores){
+      n.cores <- cores - 1
+    }
+    old.wbt.opts <- as.integer(Sys.getenv("R_WHITEBOX_MAX_PROCS", unset = NA))
+    Sys.setenv("R_WHITEBOX_MAX_PROCS" = n.cores)
+    on.exit(if (is.na(old.wbt.opts)) Sys.unsetenv("R_WHITEBOX_MAX_PROCS") else Sys.setenv("R_WHITEBOX_MAX_PROCS" = old.wbt.opts), add = TRUE)
+  }
 
   if (inherits(DEM, "SpatRaster")){
     temp_dir <- paste0(tempdir(), "/createStreams")
