@@ -67,8 +67,11 @@ When specifying multiple model types in\code{methods}, each model type and \code
 
 \examples{
 \dontshow{if (interactive()) (if (getRversion() >= "3.4") withAutoprint else force)(\{ # examplesIf}
-
 # These examples can take a while to run!
+
+# Install packages underpinning examples
+rlang::check_installed("ranger", reason = "required to run example.")
+rlang::check_installed("Rborist", reason = "required to run example.")
 
 # Single model, single trainControl
 
@@ -89,7 +92,8 @@ result <- spatPredict(features = c(aspect, solrad, slope),
   poly_sample = 100,
   trainControl = trainControl,
   methods = "ranger",
-  n.cores = 2)
+  n.cores = 2,
+  predict = TRUE)
 
 terra::plot(result$prediction)
 
@@ -119,7 +123,8 @@ result <- spatPredict(features = c(aspect, solrad, slope),
   poly_sample = 100,
   trainControl = trainControl,
   methods = c("ranger", "Rborist"),
-  n.cores = 2)
+  n.cores = 2,
+  predict = TRUE)
 
 terra::plot(result$prediction)
 \dontshow{\}) # examplesIf}

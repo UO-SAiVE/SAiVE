@@ -37,8 +37,11 @@
 #' @return A list with three to five elements: the outcome of the VSURF variable selection process, details of the fitted model, model performance statistics, model performance comparison (if methods includes more than one model), and the final predicted raster (if predict = TRUE). If applicable, the predicted raster is written to disk.
 #' @export
 #' @examplesIf interactive()
-#'
 #' # These examples can take a while to run!
+#'
+#' # Install packages underpinning examples
+#' rlang::check_installed("ranger", reason = "required to run example.")
+#' rlang::check_installed("Rborist", reason = "required to run example.")
 #'
 #' # Single model, single trainControl
 #'
@@ -59,7 +62,8 @@
 #'   poly_sample = 100,
 #'   trainControl = trainControl,
 #'   methods = "ranger",
-#'   n.cores = 2)
+#'   n.cores = 2,
+#'   predict = TRUE)
 #'
 #' terra::plot(result$prediction)
 #'
@@ -89,7 +93,8 @@
 #'   poly_sample = 100,
 #'   trainControl = trainControl,
 #'   methods = c("ranger", "Rborist"),
-#'   n.cores = 2)
+#'   n.cores = 2,
+#'   predict = TRUE)
 #'
 #' terra::plot(result$prediction)
 #'
@@ -98,16 +103,16 @@ spatPredict <- function(features, outcome, poly_sample = 1000, trainControl, met
 {
 
   cores <- parallel::detectCores()
-  if (!is.null(n.cores)){
-    if (cores < n.cores){
+  if (!is.null(n.cores)) {
+    if (cores < n.cores) {
       n.cores <- cores - 1
     }
   } else {
     n.cores <- cores - 1
   }
 
-  if (!is.null(save_path)){
-    if (!dir.exists(save_path)){
+  if (!is.null(save_path)) {
+    if (!dir.exists(save_path)) {
       stop("The specified directory does not exist. Please create it before pointing to it, or run the function without a save path.")
     }
   }
@@ -115,9 +120,9 @@ spatPredict <- function(features, outcome, poly_sample = 1000, trainControl, met
   results <- list() #This will hold model performance measures and a terra pointer to the created spatRaster
 
   #If multiple models and multiple trainControls passed as arguments, check that names of 'trainControl' list matches those of 'methods'
-  if (length(methods) > 1){
-    if (!identical(names(trainControl), names(caret::trainControl()))){ #if this is true then multiple trainControls are passed or attempted to be passed to trainControl
-      if (!all(names(trainControl) %in% methods)){ #names in both need to match
+  if (length(methods) > 1) {
+    if (!identical(names(trainControl), names(caret::trainControl()))) { #if this is true then multiple trainControls are passed or attempted to be passed to trainControl
+      if (!all(names(trainControl) %in% methods)) { #names in both need to match
         stop("It looks like you are specifying multiple model types in 'methods' along with multiple versions of trainControl, but the names of both don't match. Please review the function help and try again.")
       } else {
         multi_trainControl <- TRUE
@@ -126,77 +131,77 @@ spatPredict <- function(features, outcome, poly_sample = 1000, trainControl, met
       multi_trainControl <- FALSE
     }
   } else {
-    if (!identical(names(trainControl), names(caret::trainControl()))){
+    if (!identical(names(trainControl), names(caret::trainControl()))) {
       stop("It looks like you're specifying multiple trainControl objects under parameter trainControl, but only a single model in 'methods'. Please review your inputs.")
     } else {
       multi_trainControl <- FALSE
     }
   }
 
-  if (is.null(names(features))){
+  if (is.null(names(features))) {
     stop("Looks like you're giving me an unnamed list for 'features'. Names please.")
   }
-  if (!inherits(outcome, "SpatVector")){
+  if (!inherits(outcome, "SpatVector")) {
     stop("The parameter 'outcome' must be a terra SpatVector (points of polygons).")
   }
-  if (ncol(as.data.frame(outcome)) != 1){
+  if (ncol(as.data.frame(outcome)) != 1) {
     stop("Looks like the attribute table for the outcome does not contain exactly one column. See the help file and try again.")
   }
 
   outcome_class <- class(as.data.frame(outcome)[,1])
 
-  if (!(outcome_class %in% c("factor", "numeric", "integer"))){
+  if (!(outcome_class %in% c("factor", "numeric", "integer"))) {
     stop("The outcome variable should be factor, numeric, or integer class.")
   }
 
 
-  if (inherits(features, "list")){
+  if (inherits(features, "list")) {
     features <- terra::rast(features) #In case they were input as a list of raster objects and not a stacked spatRaster
-  } else if (!inherits(features, "SpatRaster")){
+  } else if (!inherits(features, "SpatRaster")) {
     stop("'features' must be specified as a stacked SpatRaster object (c(raster1, raster2)) or as a list of SpatRasters (list(raster1, raster2).")
   }
   crs.identical <- sapply(features, function(x) terra::same.crs(x, features[[1]]))
   ext.identical <- sapply(features, function(x) terra::compareGeom(x, features[[1]]))
-  if (FALSE %in% crs.identical){
+  if (FALSE %in% crs.identical) {
     stop("The features you specified do not have the same coordinate reference system. Please check and try again.")
   }
-  if (FALSE %in% ext.identical){
+  if (FALSE %in% ext.identical) {
     stop("The features you specified do not have the exact same extents. Please check and try again.")
   }
   outcome <- terra::project(outcome, features[[1]]) #Make sure the points have the same crs as the features.
 
-  if (terra::geomtype(outcome) == "polygons"){
+  if (terra::geomtype(outcome) == "polygons") {
     message("Sampling the polygons...")
     col_name <- names(outcome)[1]
     outcome <- terra::spatSample(outcome, size = poly_sample, strata = col_name)
-  } else if (terra::geomtype(outcome) == "points"){
+  } else if (terra::geomtype(outcome) == "points") {
     #Nothing being done with points right now
   } else {
     stop("'outcome' can only be a terra SpatVector of points or polygons.")
   }
 
   message("Extracting raster values for each point in 'outcome'...")
-  featureValues <- terra::extract(features, outcome, ID=FALSE) #get point values as a matrix
+  featureValues <- terra::extract(features, outcome, ID = FALSE) #get point values as a matrix
   TrainingData <- cbind(outcome, featureValues)
 
   TrainingDataFrame <- as.data.frame(TrainingData) #Create data.frame of TrainingData with type as factor as VSURF can't use the terra object
   #select columns with predictor variables. VSURF selects relevant variables based on random forest classification in a three step process. Step one (thresholding) eliminates irrelevant variables from the dataset, then steps 2 and 3 further refine the selection. Variables are then assigned a measure of relative importance that can be viewed.
 
   # Remove irrelevant features ######
-  if (thinFeatures){
+  if (thinFeatures) {
     message("Running VSURF algorithm to select only relevant variables...")
     tryCatch({
       res <- thinFeatures(TrainingDataFrame, names(TrainingDataFrame)[1], n.cores = n.cores)
       results$VSURF_outcome <- res$VSURF_outcome
       TrainingDataFrame <- TrainingDataFrame[ , names(res$subset_data)]
-    }, error = function(e){
+    }, error = function(e) {
       warning("Failed to run VSURF algorithm to thin features. Proceeding to model training step with whole data set.")
       results$VSURF_outcome <<- "Failed to run."
     })
   }
 
   #Split the data into a training and testing data set
-  split <- as.vector(caret::createDataPartition(TrainingDataFrame[,1], p=0.8, list=FALSE))
+  split <- as.vector(caret::createDataPartition(TrainingDataFrame[,1], p = 0.8, list = FALSE))
   Training <- as.data.frame(TrainingDataFrame[split, ])
   Testing <- as.data.frame(TrainingDataFrame[-split, ])
   results$training_df <- Training
@@ -206,20 +211,20 @@ spatPredict <- function(features, outcome, poly_sample = 1000, trainControl, met
   results$failed_methods <- character()
   cluster <- parallel::makePSOCKcluster(n.cores)
   doParallel::registerDoParallel(cluster)
-  if (length(methods) > 1){
+  if (length(methods) > 1) {
     models <- list()
-    if (length(methods) > 3 & nrow(Training > 4000) & fastCompare){
+    if (length(methods) > 3 & nrow(Training) > 4000 & fastCompare) {
       Training.sub <- Training[sample(nrow(Training), 1500), ]
       Testing.sub <- Testing[sample(nrow(Testing), 500)]
-      if (!identical(as.vector(unique(Training[,1]))[order(as.vector(unique(Training[,1])))], as.vector(unique(Training.sub[,1]))[order(as.vector(unique(Training.sub[,1])))])){ #Checks if every factor in Training is present in Training.sub, which is theoretically possible!
+      if (!identical(as.vector(unique(Training[,1]))[order(as.vector(unique(Training[,1])))], as.vector(unique(Training.sub[,1]))[order(as.vector(unique(Training.sub[,1])))])) { #Checks if every factor in Training is present in Training.sub, which is theoretically possible!
         Training.sub <- Training[sample(nrow(Training), 2500), ]
       }
-      if (!identical(as.vector(unique(Testing[,1]))[order(as.vector(unique(Testing[,1])))], as.vector(unique(Testing.sub[,1]))[order(as.vector(unique(Testing.sub[,1])))])){ #Checks if every factor in Testing is present in Testing.sub, which is theoretically possible!
+      if (!identical(as.vector(unique(Testing[,1]))[order(as.vector(unique(Testing[,1])))], as.vector(unique(Testing.sub[,1]))[order(as.vector(unique(Testing.sub[,1])))])) { #Checks if every factor in Testing is present in Testing.sub, which is theoretically possible!
         Testing.sub <- Testing[sample(nrow(Testing), 1000), ]
       }
       message("Training multiple models (on down-sampled training data for speed)...")
       redo_best <- TRUE
-      for (i in methods){
+      for (i in methods) {
         tryCatch({
           message(paste0("Working on model '", i, "'"))
           models[[i]] <- caret::train(x = Training.sub[,-1,], #predictor variables
@@ -227,20 +232,20 @@ spatPredict <- function(features, outcome, poly_sample = 1000, trainControl, met
                                       method = i,
                                       trControl = if (multi_trainControl) trainControl[[i]] else trainControl)
           message("Done")
-        }, error = function(e){
+        }, error = function(e) {
           warning(paste0("Failed to run model ", i))
           results$failed_methods <<- c(results$failed_methods, i)
         })
       }
       results$trained_model_performance <- list()
-      for (i in 1:length(models)){
+      for (i in 1:length(models)) {
         test <- stats::predict(models[[i]], newdata = Testing.sub)
         results$trained_models_performance[[names(models[i])]] <- caret::confusionMatrix(data = test, as.factor(Testing$Type))
       }
     } else {
       redo_best <- FALSE
       message("Training multiple models and finding the best one...")
-      for (i in methods){
+      for (i in methods) {
         tryCatch({
           message(paste0("Working on model '", i, "'"))
           models[[i]] <- caret::train(x = Training[,-1,], #predictor variables
@@ -248,20 +253,20 @@ spatPredict <- function(features, outcome, poly_sample = 1000, trainControl, met
                                       method = i,
                                       trControl = if (multi_trainControl) trainControl[[i]] else trainControl)
           message("Done")
-        }, error = function(e){
+        }, error = function(e) {
           warning(paste0("Failed to run model ", i))
           results$failed_methods <<- c(results$failed_methods, i)
         })
       }
       results$trained_models_performance <- list()
-      for (i in 1:length(models)){
+      for (i in 1:length(models)) {
         test <- stats::predict(models[[i]], newdata = Testing)
         results$trained_models_performance[[names(models[i])]] <- caret::confusionMatrix(data = test, as.factor(Testing$Type))
       }
     }
 
     accuracy <- numeric()
-    for (i in 1:length(results$trained_models_performance)){
+    for (i in 1:length(results$trained_models_performance)) {
       accuracy[[names(models)[i]]] <- results$trained_models_performance[[i]]$overall[1]
     }
     name <- names(which(accuracy == max(accuracy)))
@@ -269,7 +274,7 @@ spatPredict <- function(features, outcome, poly_sample = 1000, trainControl, met
 
     message(paste0("Model selection and training complete. Selected model '", name, "' based on accuracy."))
 
-    if (redo_best){
+    if (redo_best) {
       message("Re-training the best model on the full training data set...")
       model <- caret::train(x = Training[,-1,], #predictor variables
                    y = as.factor(Training[,1]), #outcome variable
@@ -285,7 +290,7 @@ spatPredict <- function(features, outcome, poly_sample = 1000, trainControl, met
                             method = methods,
                             trControl = trainControl)
       message("Model training complete. ")
-    }, error = function(e){
+    }, error = function(e) {
       parallel::stopCluster(cluster)
       stop(paste0("Failed to run model ", methods, " with the dataset and parameters specified."))
     })
@@ -298,10 +303,10 @@ spatPredict <- function(features, outcome, poly_sample = 1000, trainControl, met
   PermTest <- stats::predict(model, newdata = Testing)
   results$selected_model_performance <- caret::confusionMatrix(data = PermTest, as.factor(Testing$Type))
 
-  if (predict){
+  if (predict) {
     features <- terra::subset(features, names(TrainingDataFrame)[-1]) #remove layers from the raster stack using the pruned TrainingData (post-VSURF, if thinFeatures was set to TRUE)
     message("Running the model on the full extent of 'features' and saving to disk...")
-    results$prediction <- terra::predict(object=features, model=model, na.rm=TRUE, progress='text', filename = if(!is.null(save_path)) paste0(save_path, "/Prediction_", Sys.Date(), ".tif") else "", overwrite = TRUE, cores = n.cores)
+    results$prediction <- terra::predict(object = features, model = model, na.rm = TRUE, progress = 'text', filename = if (!is.null(save_path)) paste0(save_path, "/Prediction_", Sys.Date(), ".tif") else "", overwrite = TRUE, cores = n.cores)
   }
   return(results)
 }

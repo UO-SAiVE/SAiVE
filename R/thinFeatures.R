@@ -22,10 +22,10 @@
 
 thinFeatures <- function(data, outcome_col, n.cores = NULL) {
 
-  if (!inherits(data, "data.frame")){
+  if (!inherits(data, "data.frame")) {
     stop("'data' can only be a data.frame.")
   }
-  if (!(outcome_col %in% names(data))){
+  if (!(outcome_col %in% names(data))) {
     stop("The name you specified for the outcome column is not present in the data.frame. Try again.")
   }
 
@@ -33,15 +33,15 @@ thinFeatures <- function(data, outcome_col, n.cores = NULL) {
   rlang::check_installed("ranger", reason = " required to select + retain only relevant variables")
 
   col <- which(names(data) == outcome_col)
-  if (col != 1){
+  if (col != 1) {
     data <- data[, c(col, setdiff(seq_along(data), col))]
   }
 
   results <- list()
 
   cores <- parallel::detectCores()
-  if (!is.null(n.cores)){
-    if (cores < n.cores){
+  if (!is.null(n.cores)) {
+    if (cores < n.cores) {
       n.cores <- cores - 1
     }
   } else {
@@ -56,7 +56,7 @@ thinFeatures <- function(data, outcome_col, n.cores = NULL) {
                                         Importance = ordered.importance)
     retained <- names(data[,2:ncol(data)])[VSURF.result$varselect.pred]
     results$VSURF_outcome$Retained <- NA
-    for (i in 1:nrow(results$VSURF_outcome)){
+    for (i in 1:nrow(results$VSURF_outcome)) {
       if (results$VSURF_outcome$Feature[i] %in% retained) {
         results$VSURF_outcome$Retained[i] <- TRUE
       } else {
@@ -64,7 +64,7 @@ thinFeatures <- function(data, outcome_col, n.cores = NULL) {
       }
     }
     results$subset_data <- data[, c(1,(VSURF.result$varselect.pred) + 1)] #Subset using the final VSURF results
-  }, warning = function(w){
+  }, warning = function(w) {
     ordered.selected <- names(data[,2:ncol(data)])[VSURF.result$varselect.thres]
     ordered.importance <- VSURF.result$imp.varselect.thres
     results$VSURF_outcome <<- data.frame(Feature = ordered.selected,
@@ -72,7 +72,7 @@ thinFeatures <- function(data, outcome_col, n.cores = NULL) {
                                          Retained = TRUE)
     results$subset_data <<- data #Subset using the outcome of the interpretation step. Prediction step did not run since interpretation did not eliminate any variables.
     warning("Prediction step did not run since interpretation step did not eliminate any variables. Returning all variables.")
-  }, error = function(e){
+  }, error = function(e) {
     stop("Failed to run VSURF algorithm.")
   })
 

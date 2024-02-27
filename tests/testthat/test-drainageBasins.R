@@ -1,7 +1,7 @@
 #Cannot be tested on GitHub or CRAN because WhiteboxTools also needs to be installed.
 
 test_that("Basins are created", {
-  if (whitebox::check_whitebox_binary()){
+  if (whitebox::check_whitebox_binary()) {
     unlink(list.files(paste0(tempdir(), "/drainageBasins_test"), full.names = TRUE), recursive = TRUE)
     unlink(list.files(paste0(tempdir(), "/drainageBasins_test/output"), full.names = TRUE), recursive = TRUE)
     suppressWarnings(dir.create(paste0(tempdir(), "/drainageBasins_test")))

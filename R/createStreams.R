@@ -30,7 +30,7 @@
 #' terra::plot(res$streams_derived)
 #' }
 
-createStreams <- function(DEM, threshold, vector = NULL, save_path = NULL, force_update_wbt = FALSE, n.cores = NULL){
+createStreams <- function(DEM, threshold, vector = NULL, save_path = NULL, force_update_wbt = FALSE, n.cores = NULL) {
 
   #initial checks
   rlang::check_installed("whitebox", reason = "required to use function drainageBasins") #This is here because whitebox is not a 'depends' of this package; it is only necessary for this function and is therefore in "suggests"
@@ -38,8 +38,8 @@ createStreams <- function(DEM, threshold, vector = NULL, save_path = NULL, force
 
   # Change whitebox max core options to user request
   cores <- parallel::detectCores()
-  if (!is.null(n.cores)){
-    if (cores < n.cores){
+  if (!is.null(n.cores)) {
+    if (cores < n.cores) {
       n.cores <- cores - 1
     }
     old.wbt.opts <- as.integer(Sys.getenv("R_WHITEBOX_MAX_PROCS", unset = NA))
@@ -47,14 +47,14 @@ createStreams <- function(DEM, threshold, vector = NULL, save_path = NULL, force
     on.exit(if (is.na(old.wbt.opts)) Sys.unsetenv("R_WHITEBOX_MAX_PROCS") else Sys.setenv("R_WHITEBOX_MAX_PROCS" = old.wbt.opts), add = TRUE)
   }
 
-  if (inherits(DEM, "SpatRaster")){
+  if (inherits(DEM, "SpatRaster")) {
     temp_dir <- paste0(tempdir(), "/createStreams")
     suppressWarnings(dir.create(temp_dir))
     suppressWarnings(unlink(list.files(temp_dir, full.names=TRUE), recursive = TRUE, force = TRUE))
     terra::writeRaster(DEM, paste0(temp_dir, "/rast.tif"))
     dem_path <- paste0(temp_dir, "/rast.tif")
     directory <- temp_dir
-  } else if (inherits(DEM, "character")){
+  } else if (inherits(DEM, "character")) {
     directory <- if (is.null(save_path)) dirname(DEM) else save_path
     temp_dir <- paste0(tempdir(), "/createStreams")
     suppressWarnings(dir.create(temp_dir))
@@ -83,10 +83,10 @@ createStreams <- function(DEM, threshold, vector = NULL, save_path = NULL, force
   streams_derived <- terra::rast(paste0(directory, "/streams_derived.tif"))
 
   streams_vector <- terra::as.lines(streams_derived)
-  if (!is.null(vector)){
-    if (vector == "shp" & !is.null(save_path)){
+  if (!is.null(vector)) {
+    if (vector == "shp" & !is.null(save_path)) {
       terra::writeVector(streams_vector, paste0(directory, "/streams_vector.shp"))
-    } else if (vector == "gpkg" & !is.null(save_path)){
+    } else if (vector == "gpkg" & !is.null(save_path)) {
       terra::writeVector(streams_vector, paste0(directory, "/streams_vector.gpkg"))
     }
   }

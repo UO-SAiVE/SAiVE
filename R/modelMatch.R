@@ -37,15 +37,15 @@ modelMatch <- function(model, type = "match", similarity = 0.7)
   model_match <- model_names[model_names$abbreviations == model , ]$names
   model_match <- tag_data[rownames(tag_data) == model_match ,]
 
-  if (tolower(type) == "match"){
+  if (tolower(type) == "match") {
     type <- if (model_match$Classification == 1 & model_match$Regression == 1) "Dual" else if (model_match$Classification == 1) "Classification" else if (model_match$Regression == 1) "Regression"
   }
 
-  if (tolower(type) == "classification"){
+  if (tolower(type) == "classification") {
     tag_data <- tag_data[tag_data$Classification == 1 , ]
   } else if (tolower(type) == "regression") {
     tag_data <- tag_data[tag_data$Regression == 1 , ]
-  } else if (tolower(type) == "dual"){
+  } else if (tolower(type) == "dual") {
     tag_data <- tag_data[tag_data$Regression == 1 & tag_data$Classification == 1 , ]
   } else {
     stop("Options for parameter 'type' are 'Regression', 'Classification', or 'Dual'.")
