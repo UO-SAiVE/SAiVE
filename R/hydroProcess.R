@@ -52,8 +52,8 @@ hydroProcess <- function(DEM, breach_dist, streams = NULL, burn_dist = 10, save_
 
   # Change whitebox max core options to user request
   cores <- parallel::detectCores()
-  if (!is.null(n.cores)){
-    if (cores < n.cores){
+  if (!is.null(n.cores)) {
+    if (cores < n.cores) {
       n.cores <- cores - 1
     }
     old.wbt.opts <- as.integer(Sys.getenv("R_WHITEBOX_MAX_PROCS", unset = NA))
@@ -61,14 +61,14 @@ hydroProcess <- function(DEM, breach_dist, streams = NULL, burn_dist = 10, save_
     on.exit(if (is.na(old.wbt.opts)) Sys.unsetenv("R_WHITEBOX_MAX_PROCS") else Sys.setenv("R_WHITEBOX_MAX_PROCS" = old.wbt.opts), add = TRUE)
   }
 
-  if (inherits(DEM, "SpatRaster")){
+  if (inherits(DEM, "SpatRaster")) {
     temp_dir <- paste0(tempdir(), "/hydroProcess")
     suppressWarnings(dir.create(temp_dir))
-    suppressWarnings(unlink(list.files(temp_dir, full.names=TRUE), recursive = TRUE, force = TRUE))
+    suppressWarnings(unlink(list.files(temp_dir, full.names = TRUE), recursive = TRUE, force = TRUE))
     terra::writeRaster(DEM, paste0(temp_dir, "/rast.tif"))
     dem_path <- paste0(temp_dir, "/rast.tif")
     directory <- temp_dir
-  } else if (inherits(DEM, "character")){
+  } else if (inherits(DEM, "character")) {
     directory <- if (is.null(save_path)) dirname(DEM) else save_path
     temp_dir <- paste0(tempdir(), "/hydroProcess")
     suppressWarnings(dir.create(temp_dir))
@@ -84,14 +84,14 @@ hydroProcess <- function(DEM, breach_dist, streams = NULL, burn_dist = 10, save_
                                       output = paste0(temp_dir, "/filled_single_cells.tif"))
   filled_single_cells <- terra::rast(paste0(temp_dir, "/filled_single_cells.tif"))
 
-  if (!is.null(streams)){ #load streams, process to raster, and burn-in the DEM
-    if (inherits(streams, "character")){
+  if (!is.null(streams)) { #load streams, process to raster, and burn-in the DEM
+    if (inherits(streams, "character")) {
       streams <- suppressWarnings(terra::vect(streams))
-    } else if (!inherits(streams, "SpatVector")){
+    } else if (!inherits(streams, "SpatVector")) {
       stop("Parameter 'streams' must be either a path to a vector file (shapefile or geopackage file) or a terra SpatVector.")
     }
     streams <- terra::project(streams, DEM)
-    streams <- terra::rasterize(streams, DEM, touches = TRUE, filename = paste0(temp_dir, "/streams_rasterized.tif"), overwrite=TRUE) #Make raster stream network. Background has values NA. Write to disk to avoid memory restrictions.
+    streams <- terra::rasterize(streams, DEM, touches = TRUE, filename = paste0(temp_dir, "/streams_rasterized.tif"), overwrite = TRUE) #Make raster stream network. Background has values NA. Write to disk to avoid memory restrictions.
     streams <- (streams/streams) * burn_dist #Make each cell value = 20 to later burn in a 20 unit depression
     streams <- terra::subst(streams, NA, 0) #replace background NAs with 0 so that it subtracts (nothing) from the DEM later; subtracting NA results in NA cells.
     message("Creating depressions in the DEM where streams should be...")
@@ -101,7 +101,7 @@ hydroProcess <- function(DEM, breach_dist, streams = NULL, burn_dist = 10, save_
 
   message("Breaching depressions in the DEM to ensure continuous flow paths...")
   whitebox::wbt_breach_depressions_least_cost(
-    dem = if (!is.null(streams)) paste0(temp_dir, "/DEM_burned.tif") else paste0 (temp_dir, "/filled_single_cells.tif"),
+    dem = if (!is.null(streams)) paste0(temp_dir, "/DEM_burned.tif") else paste0(temp_dir, "/filled_single_cells.tif"),
     output = paste0(directory, "/FilledDEM.tif"),
     dist = breach_dist,
     fill = TRUE,

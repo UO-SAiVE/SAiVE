@@ -72,27 +72,27 @@ drainageBasins <- function(save_path, DEM, streams = NULL, breach_dist = 10000, 
   rlang::check_installed("whitebox", reason = "required to use function drainageBasins") #This is here because whitebox is not a 'depends' of this package; it is only necessary for this function and is therefore in "suggests"
   wbtCheck(force = force_update_wbt)  #Check whitebox binaries existence and version, install if necessary or if force_update_wbt = TRUE.
 
-  if (!(snap %in% c("nearest", "greatest"))){
+  if (!(snap %in% c("nearest", "greatest"))) {
     stop("The parameter 'snap' must be one of 'nearest' or 'greatest'.")
   }
-  if (!dir.exists(save_path)){
+  if (!dir.exists(save_path)) {
     stop("The save_path you provided does not exist. Try again.")
   }
-  if (!file.exists(DEM)){
+  if (!file.exists(DEM)) {
     stop("The DEM you pointed to does not exist. Perhaps your file path is wrong?")
   }
   directory <- dirname(DEM)
   input_DEM <- DEM #at this point DEM is a path, not an object
-  if (!is.null(streams)){
-    if (!file.exists(streams)){
+  if (!is.null(streams)) {
+    if (!file.exists(streams)) {
       stop("The streams shapefile you pointed to does not exist. Perhaps your file path is wrong? Reminder, I'm looking for the .shp file with extension.")
     }
   }
 
   # Change whitebox max core options to user request
   cores <- parallel::detectCores()
-  if (!is.null(n.cores)){
-    if (cores < n.cores){
+  if (!is.null(n.cores)) {
+    if (cores < n.cores) {
       n.cores <- cores - 1
     }
     old.wbt.opts <- as.integer(Sys.getenv("R_WHITEBOX_MAX_PROCS", unset = NA))
@@ -105,12 +105,12 @@ drainageBasins <- function(save_path, DEM, streams = NULL, breach_dist = 10000, 
   terra::terraOptions(memfrac = 0.9)
   on.exit(terra::terraOptions(memfrac = old$memfrac), add = TRUE)
 
-  if (!is.null(points)){
+  if (!is.null(points)) {
     points <- suppressWarnings(terra::vect(points)) #load the points
-    if (!(points_name_col %in% names(points))){
+    if (!(points_name_col %in% names(points))) {
       stop("The column name you passed to parameter points_name_col does not appear to be in the points shapefile. If the column name had spaces, slashes, or other problematic characters, it might have been modified upon reading it in. To see what R thinks the column names are you could load the layer using names(terra::vect('path_to_your_shp')).")
     }
-    if (is.na(terra::crs(points))){
+    if (is.na(terra::crs(points))) {
       stop("The points shapefile does not have a coordinate reference system specified. Please fix this issue and try again.")
     }
 
@@ -125,24 +125,24 @@ drainageBasins <- function(save_path, DEM, streams = NULL, breach_dist = 10000, 
   d8pntr_exists <- FALSE
   streams_derived_exists <- FALSE
   d8fac_exists <- FALSE
-  if (!is.null(streams) | !overwrite){ #no point in checking the derived rasters if a new streams layer is specified or if we're overwriting anyways
+  if (!is.null(streams) | !overwrite) { #no point in checking the derived rasters if a new streams layer is specified or if we're overwriting anyways
     message("Checking if the right layers already exist...")
-    if (file.exists(paste0(directory, "/D8pointer.tif")) & !overwrite){
+    if (file.exists(paste0(directory, "/D8pointer.tif")) & !overwrite) {
       d8pntr <- terra::rast(paste0(directory, "/D8pointer.tif"))
-      if (terra::compareGeom(d8pntr, DEM)){
+      if (terra::compareGeom(d8pntr, DEM)) {
         d8pntr_exists <- TRUE
       }
     }
-    if (file.exists(paste0(directory, "/streams_derived.tif")) & d8pntr_exists & !overwrite){
+    if (file.exists(paste0(directory, "/streams_derived.tif")) & d8pntr_exists & !overwrite) {
       streams_derived <- terra::rast(paste0(directory, "/streams_derived.tif"))
-      if (terra::compareGeom(streams_derived, DEM)){
+      if (terra::compareGeom(streams_derived, DEM)) {
         streams_derived_exists <- TRUE
       }
     }
-    if (snap == "greatest"){
-      if (file.exists(paste0(directory, "/D8fac.tif"))){
+    if (snap == "greatest") {
+      if (file.exists(paste0(directory, "/D8fac.tif"))) {
         d8fac <- terra::rast(paste0(directory, "/D8fac.tif"))
-        if (terra::compareGeom(d8fac, DEM)){
+        if (terra::compareGeom(d8fac, DEM)) {
           d8fac_exists <- TRUE
         }
       }
@@ -151,7 +151,7 @@ drainageBasins <- function(save_path, DEM, streams = NULL, breach_dist = 10000, 
     }
   }
 
-  if (!streams_derived_exists | !d8pntr_exists | !d8fac_exists | overwrite){
+  if (!streams_derived_exists | !d8pntr_exists | !d8fac_exists | overwrite) {
     message("Caculating layers derived from the DEM as they are either missing, have different extents as the provided DEM, you've requested an overwrite of calculated layers, or you specified a streams shapefile.")
 
     hydroProcess_output <- hydroProcess(DEM = input_DEM, breach_dist = breach_dist, streams = streams, burn_dist = 10, save_path = directory)
@@ -163,7 +163,7 @@ drainageBasins <- function(save_path, DEM, streams = NULL, breach_dist = 10000, 
     terra::writeRaster(d8pntr, paste0(directory, "/D8pointer.tif"), overwrite = TRUE)
     terra::writeRaster(d8fac, paste0(directory, "/D8fac.tif"), overwrite = TRUE)
   } else {
-    if (!is.null(streams)){
+    if (!is.null(streams)) {
       message("Using pre-calculated derived layers for basin delineation. NOTE: you specified a streams shapefile which won't be used. If you want to incorporate it run this function again with overwrite = TRUE.")
     } else {
       message("Using pre-calculated derived layers for basin delineation. If you are trying to change the streams threshold you must specify overwrite = TRUE for this to take effect.")
@@ -171,16 +171,16 @@ drainageBasins <- function(save_path, DEM, streams = NULL, breach_dist = 10000, 
   }
 
   #Now snap the points and delineate watersheds, returning polygons.
-  if(!is.null(points)){
+  if(!is.null(points)) {
     message("Snapping points according to the parameters selected...")
     suppressWarnings(dir.create(paste0(tempdir(), "/shapefiles")))
     unlink(list.files(paste0(tempdir(), "/shapefiles"), full.names = TRUE), recursive = TRUE, force = TRUE)
-    if (snap == "nearest"){
+    if (snap == "nearest") {
       whitebox::wbt_jenson_snap_pour_points(pour_pts = paste0(tempdir(), "/temp_inputs/points.shp"),
                                             streams = paste0(directory, "/streams_derived.tif"),
                                             output = paste0(tempdir(), "/shapefiles/snapped_points.shp"),
                                             snap_dist = snap_dist)
-    } else if (snap == "greatest"){
+    } else if (snap == "greatest") {
       whitebox::wbt_snap_pour_points(pour_pts = paste0(tempdir(), "/temp_inputs/points.shp"),
                                      flow_accum = paste0(directory, "/D8fac.tif"),
                                      output = paste0(tempdir(), "/shapefiles/snapped_points.shp"),
@@ -207,7 +207,7 @@ drainageBasins <- function(save_path, DEM, streams = NULL, breach_dist = 10000, 
 
         rast <- terra::rast(paste0(tempdir(), "/rasters/", i, ".tif"))
         poly <- terra::as.polygons(rast)
-        if (!is.null(projection)){ #project if called for, otherwise restore original projection
+        if (!is.null(projection)) { #project if called for, otherwise restore original projection
           poly <- terra::project(poly, projection)
           snapped_pt <- snapped_points[i, ]
           snapped_pt <- terra::project(snapped_pt, projection)
@@ -231,14 +231,14 @@ drainageBasins <- function(save_path, DEM, streams = NULL, breach_dist = 10000, 
         }, warning = function(w) {
           files <- list.files(paste0(save_path, "/watersheds_", Sys.Date(), "/"), pattern = paste0(folder_name, "*_duplicate"))
           nums <- integer()
-          for (j in files){
+          for (j in files) {
             num <- sub(".*[^0-9]([0-9]{1,5})$", "\\1", j)
-            if (grepl("[0-9]$", num)){
+            if (grepl("[0-9]$", num)) {
               nums <- c(nums, as.integer(num))
             }
           }
           dir.create(paste0(save_path, "/watersheds_", Sys.Date(), "/", folder_name, "_duplicate", if (length(nums) > 0) max(nums)+1 else ""))
-          save_watershed <<- paste0(save_path, "/watersheds_", Sys.Date(), "/", as.data.frame(snapped_pt[1, points_name_col]), "_duplicate", if (length(nums) > 0) max(nums)+1 else "")
+          save_watershed <<- paste0(save_path, "/watersheds_", Sys.Date(), "/", as.data.frame(snapped_pt[1, points_name_col]), "_duplicate", if (length(nums) > 0) max(nums) + 1 else "")
           folder_name <<- paste0(folder_name, "_duplicate", if (length(nums) > 0) max(nums)+1 else "")
         })
 
@@ -247,7 +247,7 @@ drainageBasins <- function(save_path, DEM, streams = NULL, breach_dist = 10000, 
         terra::writeVector(poly, paste0(save_watershed, "/", folder_name, "_drainage_basin.shp"), overwrite=TRUE)
 
         #now create/append to the larger shapefiles
-        if (count == 0){
+        if (count == 0) {
           output_basins <- poly
           input_points <- point
           snapped_pts <- snapped_pt
@@ -268,13 +268,13 @@ drainageBasins <- function(save_path, DEM, streams = NULL, breach_dist = 10000, 
     terra::writeVector(input_points, paste0(save_path, "/watersheds_", Sys.Date(), "/input_points.shp"), overwrite=TRUE)
     terra::writeVector(snapped_points, paste0(save_path, "/watersheds_", Sys.Date(), "/snapped_points.shp"), overwrite=TRUE)
 
-    if (length(failed) == nrow(snapped_points)){
+    if (length(failed) == nrow(snapped_points)) {
       warning(crayon::red$bold("Failed to delineate all points. Re-check your inputs carefully, and if the issue persists troubleshoot by running the function line by line."))
-    } else if (length(failed) > 0){
+    } else if (length(failed) > 0) {
       warning(crayon::red$bold(paste0("Failed to delineate points ", paste(failed, collapse = ", "), ".")))
     }
 
-    if (exists("d8fac")){
+    if (exists("d8fac")) {
       result <- list(delineated_basins = output_basins, input_points = input_points, snapped_points = snapped_points, streams_derived = streams_derived, d8_flow_accumulation = d8fac, d8_flow_dir = d8pntr)
       message(crayon::blue$bold("Function complete: drainage basins, points, and derived streams are returned and are saved to disk."))
     } else {
@@ -282,7 +282,7 @@ drainageBasins <- function(save_path, DEM, streams = NULL, breach_dist = 10000, 
       message(crayon::blue$bold("Function complete: drainage basins, points, and derived streams are returned and are saved to disk."))
     }
   } else {
-    if (exists("d8fac")){
+    if (exists("d8fac")) {
       result <- list(streams_derived = streams_derived, d8_flow_accumulation = d8fac, d8_flow_dir = d8pntr)
       message(crayon::blue$bold("Function complete: derived flow accumulation, direction, and streams rasters are returned and saved to disk."))
     } else {

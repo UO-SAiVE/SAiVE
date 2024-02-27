@@ -23,7 +23,7 @@ wbtCheck <- function(force = FALSE) {
   rlang::check_installed("whitebox", reason = "required to use function drainageBasins") #This is here because whitebox is not a 'depends' of this package; it is only necessary for this function and is therefore in "suggests"
 
   wbt_check <- whitebox::check_whitebox_binary()
-  if (!wbt_check){
+  if (!wbt_check) {
     message("Installing WhiteboxTools binaries...")
     whitebox::wbt_install()
     version <- invisible(utils::capture.output(whitebox::wbt_version()))
