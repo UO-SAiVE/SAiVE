@@ -3,7 +3,7 @@
 #' @author Ghislain de Laplante (gdela069@uottawa.ca or ghislain.delaplante@yukon.ca)
 #'
 #' @description
-#' `r lifecycle::badge("experimental")`
+#' `r lifecycle::badge("stable")`
 #'
 #' Function to facilitate the prediction of spatial variables using machine learning, including the selection of a particular model and/or model parameters from several user-defined options. Both classification and regression is supported, though please ensure that the models passed to the parameter `methods` are suitable.
 #'
@@ -11,11 +11,13 @@
 #'
 #' It is possible to specify multiple model types (the `methods` argument) as well as model-specific parameters (the `trainControl` parameter) if you wish to test multiple options and select the best one. To facilitate model type selection, refer to function [modelMatch()].
 #'
+#' Warning options are changed for this function only to show all warnings as they occur and reset back to their original state upon function completion. This is to ensure that any warnings when running models are shown in sequence with the messages indicating the progress of the function, especially when running multiple models and/or trainControl options.
+#'
 #' @details
 #' This function partly operates as a convenient means of passing various parameters to the [caret::train()] function, enabling the user to rapidly trial different model types and parameter sets. In addition, pre-processing of data can optionally be done using [VSURF::VSURF()] (parameter `thinFeatures`) which can decrease the time to run models by removing superfluous parameters.
 #'
 #' # Balancing classes in outcome (dependent) variable
-#' Models can be biased if they are given significantly more points in one outcome class vs others, and best practice is to even out the number of points in each class. If extracting point values from a vector or raster object, a simple way to do that is by using the "strata" parameter if using [terra::spatSample()]. If working directly from points, [caret::downSample()] and [caret::upSample()] can be used. See [this link](https://topepo.github.io/caret/subsampling-for-class-imbalances.html) for more information.
+#' Models can be biased if they are given significantly more points in one outcome class vs others, and best practice is to even out the number of points in each class. If extracting point values from a vector or raster object and passing a points vector object to this function, a simple way to do that is by using the "strata" parameter if using [terra::spatSample()].If working directly from points, [caret::downSample()] and [caret::upSample()] can be used. See [this link](https://topepo.github.io/caret/subsampling-for-class-imbalances.html) for more information. Note that if passing a polygons object to this function stratified random sampling will automatically be performed.
 #'
 #' # Classification or regression
 #' Whether this function treats your inputs as a classification or regression problem depends on the class attached to the outcome variable. A class `factor` will be treated as a classification problem while all other classes will be treated as regression problems.
@@ -34,7 +36,10 @@
 #' @param n.cores The maximum number of cores to use. Leave NULL to use all cores minus 1.
 #' @param save_path The path (folder) to which you wish to save the predicted raster. Not used unless `predict = TRUE`.
 #'
-#' @return A list with three to five elements: the outcome of the VSURF variable selection process, details of the fitted model, model performance statistics, model performance comparison (if methods includes more than one model), and the final predicted raster (if predict = TRUE). If applicable, the predicted raster is written to disk.
+#' @return If passing only one method to the `method` argument: the outcome of the VSURF variable selection process (if `thinFeatures` is TRUE), the training and testing data.frames, the fitted model, model performance statistics, and the final predicted raster (if `predict` = TRUE).
+#' If passing multiple methods to the `method` argument: the outcome of the VSURF variable selection process (if `thinFeatures` is TRUE), the training and testing data.frames, character vectors for failed methods, methods which generated a warning, and what those errors and warnings were,  model performance comparison (if methods includes more than one model), the selected model, the selected model performance statistics, and the final predicted raster (if `predict` = TRUE).
+#' In either case, the predicted raster is written to disk if `save_path` is specified.
+#'
 #' @export
 #' @examplesIf interactive()
 #' # These examples can take a while to run!
@@ -101,6 +106,10 @@
 
 spatPredict <- function(features, outcome, poly_sample = 1000, trainControl, methods, fastCompare = TRUE, thinFeatures = TRUE, predict = FALSE, n.cores = NULL, save_path = NULL)
 {
+
+  old_warn <- options("warn")
+  on.exit(options(warn = old_warn))
+  options(warn = 1)
 
   cores <- parallel::detectCores()
   if (!is.null(n.cores)) {
@@ -209,13 +218,16 @@ spatPredict <- function(features, outcome, poly_sample = 1000, trainControl, met
 
   #Train the model(s) using parallel computing
   results$failed_methods <- character()
+  results$warned_methods <- character()
+  results$error_messages <- character()
+  results$warn_messages <- character()
   cluster <- parallel::makePSOCKcluster(n.cores)
   doParallel::registerDoParallel(cluster)
   if (length(methods) > 1) {
     models <- list()
     if (length(methods) > 3 & nrow(Training) > 4000 & fastCompare) {
       Training.sub <- Training[sample(nrow(Training), 1500), ]
-      Testing.sub <- Testing[sample(nrow(Testing), 500)]
+      Testing.sub <- Testing[sample(nrow(Testing), 500), ]
       if (!identical(as.vector(unique(Training[,1]))[order(as.vector(unique(Training[,1])))], as.vector(unique(Training.sub[,1]))[order(as.vector(unique(Training.sub[,1])))])) { #Checks if every factor in Training is present in Training.sub, which is theoretically possible!
         Training.sub <- Training[sample(nrow(Training), 2500), ]
       }
@@ -225,43 +237,67 @@ spatPredict <- function(features, outcome, poly_sample = 1000, trainControl, met
       message("Training multiple models (on down-sampled training data for speed)...")
       redo_best <- TRUE
       for (i in methods) {
+        message(paste0("Working on model '", i, "'"))
         tryCatch({
-          message(paste0("Working on model '", i, "'"))
-          models[[i]] <- caret::train(x = Training.sub[,-1,], #predictor variables
+          iter <- character(0)
+          iter <- caret::train(x = Training.sub[,-1,], #predictor variables
                                       y = as.factor(Training.sub[,1]), #outcome variable
                                       method = i,
                                       trControl = if (multi_trainControl) trainControl[[i]] else trainControl)
-          message("Done")
+          if (inherits(iter, "train")) {
+            models[[i]] <- iter
+            message("Done")
+          } else {
+            stop("Failed to run model ", i, ": output was not of class 'train'")
+          }
+        }, warning = function(w) {
+          warning(paste0("Warning was issued while running model ", i, ": ", conditionMessage(w)))
+          results$warn_messages <<- c(results$warn_messages, paste0("Warning in ", i, ": ", conditionMessage(w)))
+          results$warned_methods <<- c(results$warned_methods, i)
+          models[[i]] <<- iter
         }, error = function(e) {
-          warning(paste0("Failed to run model ", i))
+          warning(paste0("Failed to run model ", i, ": ", conditionMessage(e)))
+          results$error_messages <<- c(results$error_messages, paste0("Error in ", i, ": ", conditionMessage(e)))
           results$failed_methods <<- c(results$failed_methods, i)
         })
       }
       results$trained_model_performance <- list()
       for (i in 1:length(models)) {
-        test <- stats::predict(models[[i]], newdata = Testing.sub)
-        results$trained_models_performance[[names(models[i])]] <- caret::confusionMatrix(data = test, as.factor(Testing$Type))
+        test <- stats::predict(models[[i]], newdata = Testing.sub[,-1])
+        results$trained_models_performance[[names(models[i])]] <- caret::confusionMatrix(data = test, as.factor(Testing[,1]))
       }
     } else {
       redo_best <- FALSE
       message("Training multiple models and finding the best one...")
       for (i in methods) {
+        message(paste0("Working on model '", i, "'"))
         tryCatch({
-          message(paste0("Working on model '", i, "'"))
-          models[[i]] <- caret::train(x = Training[,-1,], #predictor variables
-                                      y = as.factor(Training[,1]), #outcome variable
-                                      method = i,
-                                      trControl = if (multi_trainControl) trainControl[[i]] else trainControl)
-          message("Done")
+          iter <- caret::train(x = Training[,-1,], # predictor variables
+                               y = as.factor(Training[,1]), # outcome variable
+                               method = i,
+                               trControl = if (multi_trainControl) trainControl[[i]] else trainControl)
+          if (inherits(iter, "train")) {
+            models[[i]] <- iter
+            message("Done")
+          } else {
+            stop("Failed to run model ", i, ": output was not of class 'train'")
+          }
+        }, warning = function(w) {
+          warning(paste0("Warning was issued while running model ", i, ": ", conditionMessage(w)))
+          results$warn_messages <<- c(results$warn_messages, paste0("Warning in ", i, ": ", conditionMessage(w)))
+          results$warned_methods <<- c(results$warned_methods, i)
+          models[[i]] <<- iter
         }, error = function(e) {
-          warning(paste0("Failed to run model ", i))
+          warning(paste0("Failed to run model ", i, ": ", conditionMessage(e)))
+          results$error_messages <<- c(results$error_messages, paste0("Error in ", i, ": ", conditionMessage(e)))
           results$failed_methods <<- c(results$failed_methods, i)
         })
       }
+
       results$trained_models_performance <- list()
       for (i in 1:length(models)) {
-        test <- stats::predict(models[[i]], newdata = Testing)
-        results$trained_models_performance[[names(models[i])]] <- caret::confusionMatrix(data = test, as.factor(Testing$Type))
+        test <- stats::predict(models[[i]], newdata = Testing[,-1])
+        results$trained_models_performance[[names(models[i])]] <- caret::confusionMatrix(data = test, as.factor(Testing[,1]))
       }
     }
 
@@ -270,9 +306,14 @@ spatPredict <- function(features, outcome, poly_sample = 1000, trainControl, met
       accuracy[[names(models)[i]]] <- results$trained_models_performance[[i]]$overall[1]
     }
     name <- names(which(accuracy == max(accuracy)))
-    model <- models[[name]]
 
-    message(paste0("Model selection and training complete. Selected model '", name, "' based on accuracy."))
+    if (length(name) > 1) {
+      message("Models ", name[1], " and ", name[2], " have the same accuracy. ", name[1], " will be selected to train and test on the full dataset.")
+      name <- name[1]
+    } else {
+      message(paste0("Model selection and training complete. Selected model '", name, "' based on accuracy."))
+    }
+    model <- models[[name]]
 
     if (redo_best) {
       message("Re-training the best model on the full training data set...")
@@ -300,8 +341,8 @@ spatPredict <- function(features, outcome, poly_sample = 1000, trainControl, met
   message("Model-specific hyperparameters were adjusted automatically; refer to returned object results$selected_model to see the result.")
 
   #Test the selected model and save statistics
-  PermTest <- stats::predict(model, newdata = Testing)
-  results$selected_model_performance <- caret::confusionMatrix(data = PermTest, as.factor(Testing$Type))
+  test <- stats::predict(model, newdata = Testing)
+  results$selected_model_performance <- caret::confusionMatrix(data = test, as.factor(Testing[,1]))
 
   if (predict) {
     features <- terra::subset(features, names(TrainingDataFrame)[-1]) #remove layers from the raster stack using the pruned TrainingData (post-VSURF, if thinFeatures was set to TRUE)

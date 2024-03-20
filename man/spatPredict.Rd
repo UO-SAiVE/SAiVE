@@ -39,22 +39,26 @@ spatPredict(
 \item{save_path}{The path (folder) to which you wish to save the predicted raster. Not used unless \code{predict = TRUE}.}
 }
 \value{
-A list with three to five elements: the outcome of the VSURF variable selection process, details of the fitted model, model performance statistics, model performance comparison (if methods includes more than one model), and the final predicted raster (if predict = TRUE). If applicable, the predicted raster is written to disk.
+If passing only one method to the \code{method} argument: the outcome of the VSURF variable selection process (if \code{thinFeatures} is TRUE), the training and testing data.frames, the fitted model, model performance statistics, and the final predicted raster (if \code{predict} = TRUE).
+If passing multiple methods to the \code{method} argument: the outcome of the VSURF variable selection process (if \code{thinFeatures} is TRUE), the training and testing data.frames, character vectors for failed methods, methods which generated a warning, and what those errors and warnings were,  model performance comparison (if methods includes more than one model), the selected model, the selected model performance statistics, and the final predicted raster (if \code{predict} = TRUE).
+In either case, the predicted raster is written to disk if \code{save_path} is specified.
 }
 \description{
-\ifelse{html}{\href{https://lifecycle.r-lib.org/articles/stages.html#experimental}{\figure{lifecycle-experimental.svg}{options: alt='[Experimental]'}}}{\strong{[Experimental]}}
+\ifelse{html}{\href{https://lifecycle.r-lib.org/articles/stages.html#stable}{\figure{lifecycle-stable.svg}{options: alt='[Stable]'}}}{\strong{[Stable]}}
 
 Function to facilitate the prediction of spatial variables using machine learning, including the selection of a particular model and/or model parameters from several user-defined options. Both classification and regression is supported, though please ensure that the models passed to the parameter \code{methods} are suitable.
 
 Note that you may need to acquiesce to installing supplementary packages, depending on the model types chosen and whether or not these have been run before; this function may not be 'set and forget'.
 
 It is possible to specify multiple model types (the \code{methods} argument) as well as model-specific parameters (the \code{trainControl} parameter) if you wish to test multiple options and select the best one. To facilitate model type selection, refer to function \code{\link[=modelMatch]{modelMatch()}}.
+
+Warning options are changed for this function only to show all warnings as they occur and reset back to their original state upon function completion. This is to ensure that any warnings when running models are shown in sequence with the messages indicating the progress of the function, especially when running multiple models and/or trainControl options.
 }
 \details{
 This function partly operates as a convenient means of passing various parameters to the \code{\link[caret:train]{caret::train()}} function, enabling the user to rapidly trial different model types and parameter sets. In addition, pre-processing of data can optionally be done using \code{\link[VSURF:VSURF]{VSURF::VSURF()}} (parameter \code{thinFeatures}) which can decrease the time to run models by removing superfluous parameters.
 }
 \section{Balancing classes in outcome (dependent) variable}{
-Models can be biased if they are given significantly more points in one outcome class vs others, and best practice is to even out the number of points in each class. If extracting point values from a vector or raster object, a simple way to do that is by using the "strata" parameter if using \code{\link[terra:sample]{terra::spatSample()}}. If working directly from points, \code{\link[caret:downSample]{caret::downSample()}} and \code{\link[caret:downSample]{caret::upSample()}} can be used. See \href{https://topepo.github.io/caret/subsampling-for-class-imbalances.html}{this link} for more information.
+Models can be biased if they are given significantly more points in one outcome class vs others, and best practice is to even out the number of points in each class. If extracting point values from a vector or raster object and passing a points vector object to this function, a simple way to do that is by using the "strata" parameter if using \code{\link[terra:sample]{terra::spatSample()}}.If working directly from points, \code{\link[caret:downSample]{caret::downSample()}} and \code{\link[caret:downSample]{caret::upSample()}} can be used. See \href{https://topepo.github.io/caret/subsampling-for-class-imbalances.html}{this link} for more information. Note that if passing a polygons object to this function stratified random sampling will automatically be performed.
 }
 
 \section{Classification or regression}{
