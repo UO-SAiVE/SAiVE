@@ -108,7 +108,7 @@ spatPredict <- function(features, outcome, poly_sample = 1000, trainControl, met
 {
 
   old_warn <- options("warn")
-  on.exit(options(warn = old_warn))
+  on.exit(options(warn = old_warn$warn))
   options(warn = 1)
 
   cores <- parallel::detectCores()
@@ -169,6 +169,11 @@ spatPredict <- function(features, outcome, poly_sample = 1000, trainControl, met
   } else if (!inherits(features, "SpatRaster")) {
     stop("'features' must be specified as a stacked SpatRaster object (c(raster1, raster2)) or as a list of SpatRasters (list(raster1, raster2).")
   }
+  # stop if names of 'features' are not unique
+  if (length(unique(names(features))) != length(names(features))) {
+    stop("The names of the features must be unique.")
+  }
+
   crs.identical <- sapply(features, function(x) terra::same.crs(x, features[[1]]))
   ext.identical <- sapply(features, function(x) terra::compareGeom(x, features[[1]]))
   if (FALSE %in% crs.identical) {
@@ -217,13 +222,16 @@ spatPredict <- function(features, outcome, poly_sample = 1000, trainControl, met
   results$testing_df <- Testing
 
   #Train the model(s) using parallel computing
-  results$failed_methods <- character()
-  results$warned_methods <- character()
-  results$error_messages <- character()
-  results$warn_messages <- character()
+
   cluster <- parallel::makePSOCKcluster(n.cores)
   doParallel::registerDoParallel(cluster)
+  on.exit(parallel::stopCluster(cluster), add = TRUE)
+
   if (length(methods) > 1) {
+    results$failed_methods <- character()
+    results$warned_methods <- character()
+    results$error_messages <- character()
+    results$warn_messages <- character()
     models <- list()
     if (length(methods) > 3 & nrow(Training) > 4000 & fastCompare) {
       Training.sub <- Training[sample(nrow(Training), 1500), ]
@@ -236,69 +244,80 @@ spatPredict <- function(features, outcome, poly_sample = 1000, trainControl, met
       }
       message("Training multiple models (on down-sampled training data for speed)...")
       redo_best <- TRUE
+
       for (i in methods) {
         message(paste0("Working on model '", i, "'"))
+        current_warnings <- character(0) # Initialize to store unique warnings for this iteration
+
         tryCatch({
-          iter <- character(0)
-          iter <- caret::train(x = Training.sub[,-1,], #predictor variables
-                                      y = as.factor(Training.sub[,1]), #outcome variable
-                                      method = i,
-                                      trControl = if (multi_trainControl) trainControl[[i]] else trainControl)
+          iter <- caret::train(x = Training.sub[,-1,], # Predictor variables
+                               y = as.factor(Training.sub[,1]), # Outcome variable
+                               method = i,
+                               trControl = if (multi_trainControl) trainControl[[i]] else trainControl)
+
           if (inherits(iter, "train")) {
             models[[i]] <- iter
-            message("Done")
+            message("Model training complete for ", i)
           } else {
-            stop("Failed to run model ", i, ": output was not of class 'train'")
+            stop("Model training failed for ", i, ": output was not of class 'train'")
           }
         }, warning = function(w) {
-          warning(paste0("Warning was issued while running model ", i, ": ", conditionMessage(w)))
-          results$warn_messages <<- c(results$warn_messages, paste0("Warning in ", i, ": ", conditionMessage(w)))
-          results$warned_methods <<- c(results$warned_methods, i)
-          models[[i]] <<- iter
+          w_message <- conditionMessage(w)
+          if (!w_message %in% current_warnings) {
+            current_warnings <<- c(current_warnings, w_message) # Log unique warning
+            warning_message <- paste0("Warning while running model ", i, ": ", w_message)
+            warning(warning_message)
+            results$warn_messages <<- c(results$warn_messages, warning_message)
+            results$warned_methods <<- c(results$warned_methods, i)
+          }
         }, error = function(e) {
-          warning(paste0("Failed to run model ", i, ": ", conditionMessage(e)))
-          results$error_messages <<- c(results$error_messages, paste0("Error in ", i, ": ", conditionMessage(e)))
+          error_message <- paste0("Error in model ", i, ": ", conditionMessage(e))
+          warning(error_message) # Log the error
+          results$error_messages <<- c(results$error_messages, error_message)
           results$failed_methods <<- c(results$failed_methods, i)
         })
-      }
-      results$trained_model_performance <- list()
-      for (i in 1:length(models)) {
-        test <- stats::predict(models[[i]], newdata = Testing.sub[,-1])
-        results$trained_models_performance[[names(models[i])]] <- caret::confusionMatrix(data = test, as.factor(Testing[,1]))
       }
     } else {
       redo_best <- FALSE
       message("Training multiple models and finding the best one...")
       for (i in methods) {
         message(paste0("Working on model '", i, "'"))
+        current_warnings <- character(0) # Initialize to store unique warnings for this iteration
+
         tryCatch({
-          iter <- caret::train(x = Training[,-1,], # predictor variables
-                               y = as.factor(Training[,1]), # outcome variable
+          iter <- caret::train(x = Training[,-1,], # Predictor variables
+                               y = as.factor(Training[,1]), # Outcome variable
                                method = i,
                                trControl = if (multi_trainControl) trainControl[[i]] else trainControl)
+
           if (inherits(iter, "train")) {
             models[[i]] <- iter
-            message("Done")
+            message("Model training complete for ", i)
           } else {
-            stop("Failed to run model ", i, ": output was not of class 'train'")
+            stop("Model training failed for ", i, ": output was not of class 'train'")
           }
         }, warning = function(w) {
-          warning(paste0("Warning was issued while running model ", i, ": ", conditionMessage(w)))
-          results$warn_messages <<- c(results$warn_messages, paste0("Warning in ", i, ": ", conditionMessage(w)))
-          results$warned_methods <<- c(results$warned_methods, i)
-          models[[i]] <<- iter
+          w_message <- conditionMessage(w)
+          if (!w_message %in% current_warnings) {
+            current_warnings <<- c(current_warnings, w_message) # Log unique warning
+            warning_message <- paste0("Warning while running model ", i, ": ", w_message)
+            warning(warning_message)
+            results$warn_messages <<- c(results$warn_messages, warning_message)
+            results$warned_methods <<- c(results$warned_methods, i)
+          }
         }, error = function(e) {
-          warning(paste0("Failed to run model ", i, ": ", conditionMessage(e)))
-          results$error_messages <<- c(results$error_messages, paste0("Error in ", i, ": ", conditionMessage(e)))
+          error_message <- paste0("Error in model ", i, ": ", conditionMessage(e))
+          warning(error_message) # Log the error
+          results$error_messages <<- c(results$error_messages, error_message)
           results$failed_methods <<- c(results$failed_methods, i)
         })
       }
+    }
 
-      results$trained_models_performance <- list()
-      for (i in 1:length(models)) {
-        test <- stats::predict(models[[i]], newdata = Testing[,-1])
-        results$trained_models_performance[[names(models[i])]] <- caret::confusionMatrix(data = test, as.factor(Testing[,1]))
-      }
+    results$trained_models_performance <- list()
+    for (i in 1:length(models)) {
+      test <- stats::predict(models[[i]], newdata = Testing[,-1])
+      results$trained_models_performance[[names(models[i])]] <- caret::confusionMatrix(data = test, as.factor(Testing[,1]))
     }
 
     accuracy <- numeric()
@@ -332,11 +351,9 @@ spatPredict <- function(features, outcome, poly_sample = 1000, trainControl, met
                             trControl = trainControl)
       message("Model training complete. ")
     }, error = function(e) {
-      parallel::stopCluster(cluster)
       stop(paste0("Failed to run model ", methods, " with the dataset and parameters specified."))
     })
   }
-  parallel::stopCluster(cluster) #Actual prediction using terra has its own parallel method inherent to the function, so parallel cluster is discarded here
   results$selected_model <- model
   message("Model-specific hyperparameters were adjusted automatically; refer to returned object results$selected_model to see the result.")
 
@@ -349,5 +366,7 @@ spatPredict <- function(features, outcome, poly_sample = 1000, trainControl, met
     message("Running the model on the full extent of 'features' and saving to disk...")
     results$prediction <- terra::predict(object = features, model = model, na.rm = TRUE, progress = 'text', filename = if (!is.null(save_path)) paste0(save_path, "/Prediction_", Sys.Date(), ".tif") else "", overwrite = TRUE, cores = n.cores)
   }
+
+  message("Complete. Returning results.")
   return(results)
 }
