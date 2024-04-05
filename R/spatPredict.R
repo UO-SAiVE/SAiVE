@@ -108,8 +108,8 @@ spatPredict <- function(features, outcome, poly_sample = 1000, trainControl, met
 {
 
   old_warn <- options("warn")
-  on.exit(options(warn = old_warn))
-  options(warn = 1)
+  on.exit(try(options(warn = old_warn)))
+  try(options(warn = 1))
 
   cores <- parallel::detectCores()
   if (!is.null(n.cores)) {
