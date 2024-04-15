@@ -32,17 +32,19 @@
 #' @param features Independent variables. Must be either a NAMED list of terra spatRasters or a multi-layer (stacked) spatRaster (c(rast1, rast2). All layers must all have the same cell size, alignment, extent, and crs. These rasters should include the training extent (that covered by the spatVector in `outcome`) as well as the desired extrapolation extent.
 #' @param outcome Dependent variable, as a terra spatVector of points or polygons with a single attribute table column (of class integer, numeric or factor). The class of this column dictates whether the problem is approached as a classification or regression problem; see details. If specifying polygons, stratified random sampling will be done with `poly_sample` number of points per unique polygon value.
 #' @param poly_sample If passing a polygon SpatVector to `outcome`, the number of points to generate from the polygons for each unique polygon value.
-#' @param trainControl Parameters used to control training of the machine learning model, created with [caret::trainControl()]. Passed to the `trControl` parameter of [caret::train()]. If specifying multiple model types in `methods` you can use a single `trainControl` which will apply to all `methods`, or pass multiple variations to this argument as a list with names matching the names of `methods` (one element for each model specified in methods).
-#' @param methods A string specifying one or more classification/regression model(s) to use. Passed to the `method` parameter of [caret::train()]. If specifying more than one method they will all be passed to [caret::resamples()] to compare model performance. Then, if `predict = TRUE`, the model with the highest accuracy will be selected to predict the raster surface across the exent of `features`. A different `trainControl` parameter can be used for each model in `methods`.
-#' @param fastCompare If specifying multiple model types in `methods` or one model with multiple different `trainControl` objects, should the points in `outcome` be sub-sampled for the model comparison step? The selected model will be trained on the full `outcome` data set after selection. TRUE/FALSE. This only applies if `methods` is length > 3, with behavior further modified by fastFraction.
-#' @param fastFraction The fraction of points to use for the model comparison step (final training and testing is always done on the full data set) if `fastCompare` is TRUE. Default NULL ranges from 1 for 5000 or fewer points to 0.1 for 30 000 or more points. You can also set this to any value between 0 and 1 to override this behavior.
+#' @param trainControl Parameters used to control training of the machine learning model, created with [caret::trainControl()]. Passed to the `trControl` parameter of [caret::train()]. If specifying multiple methods in `methods` you can use a single `trainControl` which will apply to all `methods`, or pass multiple variations to this argument as a list with names matching the names of `methods` (one element for each model specified in methods).
+#' @param methods A string specifying one or more classification/regression methods(s) to use. Passed to the `method` parameter of [caret::train()]. If specifying more than one method they will all be passed to [caret::resamples()] to compare method performance. Then, if `predict = TRUE`, the method with the highest overall accuracy will be selected to predict the raster surface across the exent of `features`. A different `trainControl` parameter can be used for each method in `methods`.
+#' @param fastCompare If specifying multiple methods in `methods` or one method with multiple `trainControl` objects, should the points in `outcome` be sub-sampled for the comparison step? The selected method will be trained on the full `outcome` data set after selection. This only applies if `methods` is length > 3, with behavior further modified by fastFraction.
+#' @param fastFraction The fraction of points to use for the method comparison step (final training and testing is always done on the full data set) if `fastCompare` is TRUE and multiple methods . Default NULL ranges from 1 for 5000 or fewer points to 0.1 for 50 000 or more points. You can also set this to any value between 0 and 1 to override this behavior.
 #' @param thinFeatures Should random forest selection using [VSURF::VSURF()] be used in an attempt to remove irrelevant variables?
-#' @param predict TRUE will apply the selected model to the full extent of `features` and return a raster saved to `save_path`.
+#' @param predict TRUE will apply the trained model to the full extent of `features` and return a raster saved to `save_path`.
 #' @param n.cores The maximum number of cores to use. Leave NULL to use all cores minus 1.
 #' @param save_path The path (folder) to which you wish to save the predicted raster. Not used unless `predict = TRUE`.
 #'
 #' @return If passing only one method to the `method` argument: the outcome of the VSURF variable selection process (if `thinFeatures` is TRUE), the training and testing data.frames, the fitted model, model performance statistics, and the final predicted raster (if `predict` = TRUE).
-#' If passing multiple methods to the `method` argument: the outcome of the VSURF variable selection process (if `thinFeatures` is TRUE), the training and testing data.frames, character vectors for failed methods, methods which generated a warning, and what those errors and warnings were,  model performance comparison (if methods includes more than one model), the selected model, the selected model performance statistics, and the final predicted raster (if `predict` = TRUE).
+#'
+#' If passing multiple methods to the `method` argument: the outcome of the VSURF variable selection process (if `thinFeatures` is TRUE), the training and testing data.frames, character vectors for failed methods, methods which generated a warning, and what those errors and warnings were,  model performance comparison (if methods includes more than one method), the selected method, the trained model performance statistics, and the final predicted raster (if `predict` = TRUE).
+#'
 #' In either case, the predicted raster is written to disk if `save_path` is specified.
 #'
 #' @export
@@ -236,10 +238,11 @@ spatPredict <- function(features, outcome, poly_sample = 1000, trainControl, met
       res <- thinFeatures(TrainingDataFrame, names(TrainingDataFrame)[1], n.cores = n.cores)
       results$VSURF_outcome <- res$VSURF_outcome
       TrainingDataFrame <- TrainingDataFrame[ , names(res$subset_data)]
-      TrainingData <- TrainingData[, names(res$subset_data)]
+      TrainingData <- TrainingData[ , names(res$subset_data)]
     }, error = function(e) {
       warning("Failed to run VSURF algorithm to thin features. Proceeding to model training step with whole data set.")
       results$VSURF_outcome <<- "Failed to run."
+      thinFeatures <<- FALSE
     })
   }
 
@@ -417,9 +420,15 @@ spatPredict <- function(features, outcome, poly_sample = 1000, trainControl, met
   results$selected_model_performance <- caret::confusionMatrix(data = test, as.factor(Testing[,1]))
 
   if (predict) {
-    features <- terra::subset(features, names(TrainingDataFrame)[-1]) #remove layers from the raster stack using the pruned TrainingDataFrame (post-VSURF, if thinFeatures was set to TRUE)
+    if (thinFeatures) {
+      features <- terra::subset(features, names(TrainingDataFrame)[-1]) #remove layers from the raster stack using the pruned TrainingDataFrame (post-VSURF, if thinFeatures was set to TRUE)
+    }
     message("Running the model on the full extent of 'features' and saving to disk...")
-    results$prediction <- terra::predict(object = features, model = model, na.rm = TRUE, progress = 'text', filename = if (!is.null(save_path)) paste0(save_path, "/Prediction_", Sys.Date(), ".tif") else "", overwrite = TRUE, cores = n.cores)
+    tryCatch({
+      results$prediction <- terra::predict(object = features, model = model, na.rm = TRUE, progress = 'text', filename = if (!is.null(save_path)) paste0(save_path, "/Prediction_", Sys.Date(), ".tif") else "", overwrite = TRUE, cores = n.cores)
+    }, error = function(e) {
+      warning("Failed to run the model on the full extent of 'features'. This could be a fault in either running the model or saving the results to disk. To avoid re-running this function from scratch refer to the function outputs for the selected model and apply it to your predictor variables.")
+    })
   }
 
   message("Finished. Returning results.")
