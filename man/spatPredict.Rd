@@ -11,6 +11,7 @@ spatPredict(
   trainControl,
   methods,
   fastCompare = TRUE,
+  fastFraction = NULL,
   thinFeatures = TRUE,
   predict = FALSE,
   n.cores = NULL,
@@ -24,15 +25,17 @@ spatPredict(
 
 \item{poly_sample}{If passing a polygon SpatVector to \code{outcome}, the number of points to generate from the polygons for each unique polygon value.}
 
-\item{trainControl}{Parameters used to control training of the machine learning model, created with \code{\link[caret:trainControl]{caret::trainControl()}}. Passed to the \code{trControl} parameter of \code{\link[caret:train]{caret::train()}}. If specifying multiple model types in \code{methods} you can use a single \code{trainControl} which will apply to all \code{methods}, or pass multiple variations to this argument as a list with names matching the names of \code{methods} (one element for each model specified in methods).}
+\item{trainControl}{Parameters used to control training of the machine learning model, created with \code{\link[caret:trainControl]{caret::trainControl()}}. Passed to the \code{trControl} parameter of \code{\link[caret:train]{caret::train()}}. If specifying multiple methods in \code{methods} you can use a single \code{trainControl} which will apply to all \code{methods}, or pass multiple variations to this argument as a list with names matching the names of \code{methods} (one element for each model specified in methods).}
 
-\item{methods}{A string specifying one or more classification/regression model(s) to use. Passed to the \code{method} parameter of \code{\link[caret:train]{caret::train()}}. If specifying more than one method they will all be passed to \code{\link[caret:resamples]{caret::resamples()}} to compare model performance. Then, if \code{predict = TRUE}, the model with the highest accuracy will be selected to predict the raster surface across the exent of \code{features}. A different \code{trainControl} parameter can be used for each model in \code{methods}.}
+\item{methods}{A string specifying one or more classification/regression methods(s) to use. Passed to the \code{method} parameter of \code{\link[caret:train]{caret::train()}}. If specifying more than one method they will all be passed to \code{\link[caret:resamples]{caret::resamples()}} to compare method performance. Then, if \code{predict = TRUE}, the method with the highest overall accuracy will be selected to predict the raster surface across the exent of \code{features}. A different \code{trainControl} parameter can be used for each method in \code{methods}.}
 
-\item{fastCompare}{If specifying multiple model types in \code{methods} or one model with multiple different \code{trainControl} objects, should the points in \code{outcome} be sub-sampled for the model comparison step? The selected model will be trained on the full \code{outcome} data set after selection. TRUE/FALSE. This only applies if \code{methods} is length > 3 and if \code{outcome} has more than 4000 rows.}
+\item{fastCompare}{If specifying multiple methods in \code{methods} or one method with multiple \code{trainControl} objects, should the points in \code{outcome} be sub-sampled for the comparison step? The selected method will be trained on the full \code{outcome} data set after selection. This only applies if \code{methods} is length > 3, with behavior further modified by fastFraction.}
+
+\item{fastFraction}{The fraction of points to use for the method comparison step (final training and testing is always done on the full data set) if \code{fastCompare} is TRUE and multiple methods . Default NULL ranges from 1 for 5000 or fewer points to 0.1 for 50 000 or more points. You can also set this to any value between 0 and 1 to override this behavior.}
 
 \item{thinFeatures}{Should random forest selection using \code{\link[VSURF:VSURF]{VSURF::VSURF()}} be used in an attempt to remove irrelevant variables?}
 
-\item{predict}{TRUE will apply the selected model to the full extent of \code{features} and return a raster saved to \code{save_path}.}
+\item{predict}{TRUE will apply the trained model to the full extent of \code{features} and return a raster saved to \code{save_path}.}
 
 \item{n.cores}{The maximum number of cores to use. Leave NULL to use all cores minus 1.}
 
@@ -40,7 +43,9 @@ spatPredict(
 }
 \value{
 If passing only one method to the \code{method} argument: the outcome of the VSURF variable selection process (if \code{thinFeatures} is TRUE), the training and testing data.frames, the fitted model, model performance statistics, and the final predicted raster (if \code{predict} = TRUE).
-If passing multiple methods to the \code{method} argument: the outcome of the VSURF variable selection process (if \code{thinFeatures} is TRUE), the training and testing data.frames, character vectors for failed methods, methods which generated a warning, and what those errors and warnings were,  model performance comparison (if methods includes more than one model), the selected model, the selected model performance statistics, and the final predicted raster (if \code{predict} = TRUE).
+
+If passing multiple methods to the \code{method} argument: the outcome of the VSURF variable selection process (if \code{thinFeatures} is TRUE), the training and testing data.frames, character vectors for failed methods, methods which generated a warning, and what those errors and warnings were,  model performance comparison (if methods includes more than one method), the selected method, the trained model performance statistics, and the final predicted raster (if \code{predict} = TRUE).
+
 In either case, the predicted raster is written to disk if \code{save_path} is specified.
 }
 \description{
@@ -50,23 +55,27 @@ Function to facilitate the prediction of spatial variables using machine learnin
 
 Note that you may need to acquiesce to installing supplementary packages, depending on the model types chosen and whether or not these have been run before; this function may not be 'set and forget'.
 
-It is possible to specify multiple model types (the \code{methods} argument) as well as model-specific parameters (the \code{trainControl} parameter) if you wish to test multiple options and select the best one. To facilitate model type selection, refer to function \code{\link[=modelMatch]{modelMatch()}}.
+It is possible to specify multiple machine learning methods (the \code{methods} parameter) as well as method-specific parameters (the \code{trainControl} parameter) if you wish to test multiple options and select the best one. To facilitate method selection, refer to function \code{\link[=modelMatch]{modelMatch()}}. If you are unsure of the best model to use, you can use the \code{fastCompare} parameter to quickly compare models and select the best one based on accuracy. If you wish to use a single model and/or trainControl object, you can pass a single string to \code{methods} and a single trainControl object to \code{trainControl}.
 
-Warning options are changed for this function only to show all warnings as they occur and reset back to their original state upon function completion. This is to ensure that any warnings when running models are shown in sequence with the messages indicating the progress of the function, especially when running multiple models and/or trainControl options.
+Warning options are changed for this function only to show all warnings as they occur and reset back to their original state upon function completion (a test is done first to ensure it can be reset). This is to ensure that any warnings when running models are shown in sequence with the messages indicating the progress of the function, especially when running multiple models and/or trainControl options.
 }
 \details{
 This function partly operates as a convenient means of passing various parameters to the \code{\link[caret:train]{caret::train()}} function, enabling the user to rapidly trial different model types and parameter sets. In addition, pre-processing of data can optionally be done using \code{\link[VSURF:VSURF]{VSURF::VSURF()}} (parameter \code{thinFeatures}) which can decrease the time to run models by removing superfluous parameters.
 }
+\section{Model testing, comparison, and reported metrics}{
+After extracting raster values at \emph{n} points from the \code{features} rasters the point values are split spatially into training and testing sets along a 70/30 split. This is accomplished by creating a grid (1000*1000) of polygons over the extent of the points and randomly assigning polygons to training or testing sets. Points within these polygons are then assigned to the corresponding set, ensuring that the training and testing sets are spatially independent.
+}
+
+\section{Method for selecting the best model:}{
+When specifying multiple model types in\code{methods}, each model type and \code{trainControl} pair (if \code{trainControl} is a list of length equal to \code{methods}) is run using \code{\link[caret:train]{caret::train()}}. To speed things up you can use \code{fastCompare} = TRUE. Models are then compared on their 'accuracy' metric as output by \code{\link[caret:resamples]{caret::resamples()}} when run on the testing partition, and the highest-performing model is selected. If \code{fastCompare} is TRUE, this model is then run on the complete data set provided in \code{outcome}. Model statistics are returned upon function completion, which allows the user to select their own 'best performing' model based on other criteriaif desired.
+}
+
 \section{Balancing classes in outcome (dependent) variable}{
-Models can be biased if they are given significantly more points in one outcome class vs others, and best practice is to even out the number of points in each class. If extracting point values from a vector or raster object and passing a points vector object to this function, a simple way to do that is by using the "strata" parameter if using \code{\link[terra:sample]{terra::spatSample()}}.If working directly from points, \code{\link[caret:downSample]{caret::downSample()}} and \code{\link[caret:downSample]{caret::upSample()}} can be used. See \href{https://topepo.github.io/caret/subsampling-for-class-imbalances.html}{this link} for more information. Note that if passing a polygons object to this function stratified random sampling will automatically be performed.
+Models can be biased if they are given significantly more points in one outcome class vs others, and best practice is to even out the number of points in each class. If extracting point values from a vector or raster object and passing a points vector object to this function, a simple way to do that is by using the "strata" parameter if using \code{\link[terra:sample]{terra::spatSample()}}. If working directly from points, \code{\link[caret:downSample]{caret::downSample()}} and \code{\link[caret:downSample]{caret::upSample()}} can be used. See \href{https://topepo.github.io/caret/subsampling-for-class-imbalances.html}{this link} for more information. Note that if passing a polygons object to this function stratified random sampling will automatically be performed.
 }
 
 \section{Classification or regression}{
 Whether this function treats your inputs as a classification or regression problem depends on the class attached to the outcome variable. A class \code{factor} will be treated as a classification problem while all other classes will be treated as regression problems.
-}
-
-\section{Method for selecting the best model:}{
-When specifying multiple model types in\code{methods}, each model type and \code{trainControl} pair (if \code{trainControl} is a list of length equal to \code{methods}) is run using \code{\link[caret:train]{caret::train()}}. To speed things up you can use \code{fastCompare} = TRUE. Models are then compared on their 'accuracy' metric as output by \code{\link[caret:resamples]{caret::resamples()}}, and the highest-performing model is selected. If \code{fastCompare} is TRUE, this model is then run on the complete data set provided in \code{outcome}. Model statistics are returned upon function completion, which allows the user to select their own 'best performing' model based on other criteria.
 }
 
 \examples{
