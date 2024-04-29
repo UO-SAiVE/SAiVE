@@ -15,8 +15,9 @@
 #' @param threshold The accumulation threshold in DEM cells necessary to start defining a stream.
 #' @param vector Output file specifications. NULL for no vector file saved to disk, "gpkg" for a geopackage file, "shp" for a shapefile.
 #' @param save_path An optional path in which to save the newly created stream network. If left NULL will save it in the same directory as the provided DEM or, if the DEM is a terra object, return only terra objects.
-#' @param force_update_wbt Whitebox Tools is by default only downloaded if it cannot be found on the computer, and no check are performed to ensure the local version is current. Set to TRUE if you know that there is a new version and you would like to use it.
 #' @param n.cores The maximum number of cores to use. Leave NULL to use all cores minus 1.
+#' @param force_update_wbt Whitebox Tools is by default only downloaded if it cannot be found on the computer, and no check are performed to ensure the local version is current. Set to TRUE if you know that there is a new version and you would like to use it.
+#' @param silent_wbt Should Whitebox tools messages be suppressed? This function prints messages to the console already but these messages can be useful if you need to do some debugging.
 #'
 #' @return A raster representation of streams and, if requested, a vector representation of streams. Returned as terra objects and saved to disk if `save_path` is not null.
 #' @export
@@ -30,11 +31,19 @@
 #' terra::plot(res$streams_derived)
 #' }
 
-createStreams <- function(DEM, threshold, vector = NULL, save_path = NULL, force_update_wbt = FALSE, n.cores = NULL) {
+createStreams <- function(DEM, threshold, vector = NULL, save_path = NULL,  n.cores = NULL, force_update_wbt = FALSE, silent_wbt = TRUE) {
+
+  if (silent_wbt) {
+    old_option <- options("whitebox.verbose_mode")
+    options("whitebox.verbose_mode" = FALSE)
+    if (old_option$whitebox.verbose_mode) {
+      on.exit(options("whitebox.verbose_mode" = TRUE))
+    }
+  }
 
   #initial checks
   rlang::check_installed("whitebox", reason = "required to use function drainageBasins") #This is here because whitebox is not a 'depends' of this package; it is only necessary for this function and is therefore in "suggests"
-  wbtCheck(force = force_update_wbt) #Check whitebox binaries existence and version, install if necessary or if force_update_wbt = TRUE.
+  wbtCheck(force = force_update_wbt, silent = silent_wbt) #Check whitebox binaries existence and version, install if necessary or if force_update_wbt = TRUE.
 
   # Change whitebox max core options to user request
   cores <- parallel::detectCores()

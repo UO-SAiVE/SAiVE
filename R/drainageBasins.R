@@ -7,7 +7,7 @@
 #'
 #' Hydro-processes a DEM, creating flow accumulation, direction, and streams rasters, and (optionally) delineates watersheds above one or more points using [Whitebox Tools](https://www.whiteboxgeo.com/). To facilitate this task in areas with poor quality/low resolution DEMs, can "burn-in" a stream network to the DEM to ensure proper stream placement (see details). Many time-consuming raster operations are performed, so the function will attempt to use existing rasters if they are present in the same path as the base DEM and named according to the function's naming conventions. In practice, this means that only the first run of the function needs to be very time consuming. See details for more information.
 #'
-#' NOTE 1: This tool can be slow to execute, and will use a lot of memory. Be patient, it might take several hours with a large DEM.
+#' NOTE 1: This tool can be slow to execute and will use a lot of memory. Be patient, it might take several hours with a large DEM.
 #'
 #' NOTE 2: ESRI shapefiles, on which the Whitebox Tools functions depend, truncate column names to 10 characters. You may want to save and re-assign column names to the output terra object after this function has run.
 #'
@@ -19,7 +19,7 @@
 #' This function uses software from the Whitebox geospatial analysis package, built by Prof. John Lindsay. Refer to [this link](https://www.whiteboxgeo.com/manual/wbt_book/intro.html) for more information.
 #'
 #' ## Creating derived raster layers without defining watersheds
-#' This function can be run without having any specific point above which to define a watershed. This can come in handy if you need to know where the synthetic streams raster will end up to ensure that your defined watershed pour points do not end up on the wrong stream branch, or if you simply want to front-load work while you work on defining the watershed pour points. To do this, leave the parameter 'points' and associated parameters as `NULL`.
+#' This function can be run without having any specific point above which to define a watershed. This can come in handy if you need to know where the synthetic streams raster will end up to ensure that your defined watershed pour points do not end up on the wrong stream branch, or if you simply want to front-load work while you work on defining the watershed pour points. To do this, leave the parameter `points` and associated parameters as `NULL`.
 #'
 #' ## Explanation of process:
 #' Starting from a supplied DEM, the function will fill single-cell pits, burn-in a stream network depression if requested (ensuring that flow accumulations happen in the correct location), breach depressions in the digital elevation model using a least-cost algorithm (i.e. using the pathway resulting in minimal changes to the DEM considering distance and elevation) then calculate flow accumulation and direction rasters. Then, a raster of streams is created where flow accumulation is greatest. The points provided by the user are then snapped to the derived streams raster and watersheds are computed using the flow direction rasters. Finally, the watershed/drainage basin polygons are saved to the specified save path along with the provided points and the snapped pour points.
@@ -27,19 +27,20 @@
 #' ## Using a streams shapefile to burn-in depressions to the DEM:
 #' Be aware that this part of the function should ideally be used with a "simplified" streams shapefile. In particular, avoid or pre-process stream shapefiles that represent side-channels, as these will burn-in several parallel tracks to the DEM. ESRI has a tool called "simplify hydrology lines" which is great if you can ever get it to work, and WhiteboxTools has functions [whitebox::wbt_remove_short_streams()] to trim the streams raster, and [whitebox::wbt_repair_stream_vector_topology()] to help in converting a corrected streams vector to raster in the first place.
 #'
-#' @param save_path The directory where you want the output shapefiles saved.
 #' @param DEM The path to a DEM including extension from which to delineate watersheds/catchments. Must be in .tif format. Derived layers such as flow accumulation, flow direction, and streams will inherit the DEM coordinate reference system.
 #' @param streams Optionally, the path to the polylines shapefile/geopackage containing lines, which can be used to improve accuracy when using poor quality DEMs. If this shapefile is the only input parameter being modified from previous runs (i.e. you've found a new/better streams shapefile but the DEM is unchanged) then specify a shapefile or geopackage lines file here and overwrite = TRUE.
 #' @param breach_dist The max radius (in raster cells) for which to search for a path to breach depressions, passed to [whitebox::wbt_breach_depressions_least_cost()]. This value should be high to ensure all depressions are breached. Note that the DEM is *not* breached in order of lowest elevation to greatest, nor is it breached sequentially (order is unknown, but the raster is presumably searched in some grid pattern for depressions). This means that flow paths may need to cross multiple depressions, especially in low relief areas.
 #' @param threshold The accumulation threshold in DEM cells necessary to start defining a stream. This streams raster is necessary to snap pout points to, so make sure not to make this number too great!
 #' @param overwrite If applicable, should rasters present in the same directory as the DEM be overwritten? This will also force the recalculation of derived layers.
-#' @param points The path to the points shapefile (extension .shp) containing the points from which to build watersheds. The attribute of each point will be attached to the newly-created drainage polygons. Leave NULL (along with related parameters) to only process the DEM without defining watersheds.
-#' @param points_name_col The name of the column in the points shapefile containing names to assign to the watersheds. Duplicates *are* allowed, and are labelled with the suffix _duplicate and a number for duplicates 2+.
 #' @param projection Optionally, a projection string in the form "epsg:3579" (find them [here](https://epsg.io/)). The derived watersheds and point output layers will use this projection. If NULL the projection of the points will be used.
+#' @param points The path to the points shapefile (extension .shp) containing the points from which to build watersheds. The attribute of each point will be attached to the newly-created drainage polygons. Leave NULL (along with related parameters) to only process the DEM without defining watersheds.
+#' @param points_name_col The name of the column in the points shapefile containing names to assign to the watersheds. Duplicates *are* allowed, and are labelled with the suffix _duplicate and a number for duplicates 2 +.
+#' @param save_path The directory where you want the output shapefiles saved.
 #' @param snap Snap to the "nearest" derived (calculated) stream, or to the "greatest" flow accumulation cell within the snap distance? Beware that "greatest" will move the point downstream by up to the 'snap_dist' specified, while nearest might snap to the wrong stream.
 #' @param snap_dist The search radius within which to snap points to streams. Snapping method depends on 'snap' parameter. Note that distance units will match the projection, so probably best to work on a meter grid.
-#' @param force_update_wbt Whitebox Tools is by default only downloaded if it cannot be found on the computer, and no check are performed to ensure the local version is current. Set to TRUE if you know that there is a new version and you would like to use it.
 #' @param n.cores The maximum number of cores to use. Leave NULL to use all cores minus 1.
+#' @param force_update_wbt Whitebox Tools is by default only downloaded if it cannot be found on the computer, and no check are performed to ensure the local version is current. Set to TRUE if you know that there is a new version and you would like to use it.
+#' @param silent_wbt Should Whitebox tools messages be suppressed? This function prints messages to the console already but these messages can be useful if you need to do some debugging.
 #'
 #' @return A list of terra objects. If points are specified: delineated drainages, pour points as provided, snapped pour points, and the derived streams network. If no points: flow accumulation and direction rasters, and the derived streams network. If points specified, also saved to disk: an ESRI shapefile for each drainage basin, plus the associated snapped pour point and the point as provided and a shapefiles for all basins/points together. In all cases the created or discovered rasters will be in the same folder as the DEM.
 #'
@@ -66,18 +67,24 @@
 #' }
 
 
-drainageBasins <- function(save_path, DEM, streams = NULL, breach_dist = 10000, threshold = 500, overwrite = FALSE, points = NULL, points_name_col = NULL, projection = NULL, snap = "nearest", snap_dist = 200, force_update_wbt = FALSE, n.cores = NULL) {
+drainageBasins <- function(DEM, streams = NULL, breach_dist = 10000, threshold = 500, overwrite = FALSE, projection = NULL, points = NULL, points_name_col = NULL, save_path = NULL, snap = "nearest", snap_dist = 200, n.cores = NULL, force_update_wbt = FALSE, silent_wbt = TRUE) {
+
+  if (silent_wbt) {
+    old_option <- options("whitebox.verbose_mode")
+    options("whitebox.verbose_mode" = FALSE)
+    if (old_option$whitebox.verbose_mode) {
+      on.exit(options("whitebox.verbose_mode" = TRUE))
+    }
+  }
 
   #initial checks
   rlang::check_installed("whitebox", reason = "required to use function drainageBasins") #This is here because whitebox is not a 'depends' of this package; it is only necessary for this function and is therefore in "suggests"
-  wbtCheck(force = force_update_wbt)  #Check whitebox binaries existence and version, install if necessary or if force_update_wbt = TRUE.
+  wbtCheck(force = force_update_wbt, silent = TRUE)  #Check whitebox binaries existence and version, install if necessary or if force_update_wbt = TRUE.
 
   if (!(snap %in% c("nearest", "greatest"))) {
     stop("The parameter 'snap' must be one of 'nearest' or 'greatest'.")
   }
-  if (!dir.exists(save_path)) {
-    stop("The save_path you provided does not exist. Try again.")
-  }
+
   if (!file.exists(DEM)) {
     stop("The DEM you pointed to does not exist. Perhaps your file path is wrong?")
   }
@@ -106,6 +113,9 @@ drainageBasins <- function(save_path, DEM, streams = NULL, breach_dist = 10000, 
   on.exit(terra::terraOptions(memfrac = old$memfrac), add = TRUE)
 
   if (!is.null(points)) {
+    if (!dir.exists(save_path)) {
+      stop("The save_path you provided does not exist. Ceate it and try again.")
+    }
     points <- suppressWarnings(terra::vect(points)) #load the points
     if (!(points_name_col %in% names(points))) {
       stop("The column name you passed to parameter points_name_col does not appear to be in the points shapefile. If the column name had spaces, slashes, or other problematic characters, it might have been modified upon reading it in. To see what R thinks the column names are you could load the layer using names(terra::vect('path_to_your_shp')).")
@@ -114,11 +124,11 @@ drainageBasins <- function(save_path, DEM, streams = NULL, breach_dist = 10000, 
       stop("The points shapefile does not have a coordinate reference system specified. Please fix this issue and try again.")
     }
 
-    original_projection <- paste0("epsg:", terra::crs(points, describe=TRUE)$code)
+    original_projection <- paste0("epsg:", terra::crs(points, describe = TRUE)$code)
     DEM <- terra::rast(DEM) #load the DEM to R environment
     points <- terra::project(points, DEM)
     suppressWarnings(dir.create(paste0(tempdir(), "/temp_inputs")))
-    terra::writeVector(points, paste0(tempdir(), "/temp_inputs/points.shp"), overwrite=TRUE)
+    terra::writeVector(points, paste0(tempdir(), "/temp_inputs/points.shp"), overwrite = TRUE)
   }
 
   #Check for existence of final layers and that their extents match the provided DEM. Create them if not exist or different extent.
@@ -171,7 +181,7 @@ drainageBasins <- function(save_path, DEM, streams = NULL, breach_dist = 10000, 
   }
 
   #Now snap the points and delineate watersheds, returning polygons.
-  if(!is.null(points)) {
+  if (!is.null(points)) {
     message("Snapping points according to the parameters selected...")
     suppressWarnings(dir.create(paste0(tempdir(), "/shapefiles")))
     unlink(list.files(paste0(tempdir(), "/shapefiles"), full.names = TRUE), recursive = TRUE, force = TRUE)
@@ -189,8 +199,7 @@ drainageBasins <- function(save_path, DEM, streams = NULL, breach_dist = 10000, 
 
     snapped_points <- suppressWarnings(terra::vect(paste0(tempdir(), "/shapefiles/snapped_points.shp"))) #load to memory so as to iterate over each point, allowing for looping. Otherwise the tool creates non-overlapping rasters.
     suppressWarnings(dir.create(paste0(tempdir(), "/rasters"))) #watershed tool outputs rasters (it works off a grid), but polygons are desired output. These are not saved.
-    unlink(list.files(paste0(tempdir(), "/rasters"), full.names=TRUE), recursive = TRUE, force = TRUE) #ensure clear dir for repeat runs in same session
-    suppressWarnings(dir.create(save_path)) #Create the basic save_path if necessary
+    unlink(list.files(paste0(tempdir(), "/rasters"), full.names = TRUE), recursive = TRUE, force = TRUE) #ensure clear dir for repeat runs in same session
     suppressWarnings(dir.create(paste0(save_path, "/watersheds_", Sys.Date()))) #The desired outputs will go here
     unlink(list.files(paste0(save_path, "/watersheds_", Sys.Date()), full.names = TRUE), recursive = TRUE, force = TRUE)
     count <- 0 #For 'together' shapefiles. Need a feature to create the R object, then features can be appended.
