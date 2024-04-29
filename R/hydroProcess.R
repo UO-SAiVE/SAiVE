@@ -58,7 +58,7 @@ hydroProcess <- function(DEM, breach_dist, streams = NULL, burn_dist = 10, save_
 
   #initial checks
   rlang::check_installed("whitebox", reason = "required to use function drainageBasins") #This is here because whitebox is not a 'depends' of this package; it is only necessary for this function and is therefore in "suggests"
-  wbtCheck(force = force_update_wbt, silent = silent_wbt)  #Check whitebox binaries existence and version, install if necessary or if force_update_wbt = TRUE.
+  wbtCheck(force = force_update_wbt, silent = TRUE)  #Check whitebox binaries existence and version, install if necessary or if force_update_wbt = TRUE.
 
   # Change whitebox max core options to user request
   cores <- parallel::detectCores()

@@ -9,8 +9,9 @@ createStreams(
   threshold,
   vector = NULL,
   save_path = NULL,
+  n.cores = NULL,
   force_update_wbt = FALSE,
-  n.cores = NULL
+  silent_wbt = TRUE
 )
 }
 \arguments{
@@ -22,9 +23,11 @@ createStreams(
 
 \item{save_path}{An optional path in which to save the newly created stream network. If left NULL will save it in the same directory as the provided DEM or, if the DEM is a terra object, return only terra objects.}
 
+\item{n.cores}{The maximum number of cores to use. Leave NULL to use all cores minus 1.}
+
 \item{force_update_wbt}{Whitebox Tools is by default only downloaded if it cannot be found on the computer, and no check are performed to ensure the local version is current. Set to TRUE if you know that there is a new version and you would like to use it.}
 
-\item{n.cores}{The maximum number of cores to use. Leave NULL to use all cores minus 1.}
+\item{silent_wbt}{Should Whitebox tools messages be suppressed? This function prints messages to the console already but these messages can be useful if you need to do some debugging.}
 }
 \value{
 A raster representation of streams and, if requested, a vector representation of streams. Returned as terra objects and saved to disk if \code{save_path} is not null.

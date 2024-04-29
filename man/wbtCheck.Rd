@@ -4,15 +4,19 @@
 \alias{wbtCheck}
 \title{Check WhiteboxTools binaries installation}
 \usage{
-wbtCheck(force = FALSE)
+wbtCheck(force = FALSE, silent)
 }
 \arguments{
 \item{force}{Set TRUE to force update of WhiteboxTools binaries.}
+
+\item{silent}{TRUE to suppress console messages other than those explaining that Whitebox Tools binaries are being installed.}
 }
 \value{
 Returns the version number of the installed binaries and (if necessary) installs WhiteboxTools in its default location.
 }
 \description{
+\ifelse{html}{\href{https://lifecycle.r-lib.org/articles/stages.html#stable}{\figure{lifecycle-stable.svg}{options: alt='[Stable]'}}}{\strong{[Stable]}}
+
 Checks for the existence of WhiteboxTools in its default directory and installs it if necessary or if \code{force = TRUE}.
 }
 \examples{

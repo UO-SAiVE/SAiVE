@@ -8,8 +8,7 @@
 #' Checks for the existence of WhiteboxTools in its default directory and installs it if necessary or if `force = TRUE`.
 #'
 #' @param force Set TRUE to force update of WhiteboxTools binaries.
-#' @param silent_wbt Should Whitebox tools messages be suppressed? This function prints messages to the console already but these messages can be useful if you need to do some debugging.
-
+#' @param silent TRUE to suppress console messages other than those explaining that Whitebox Tools binaries are being installed.
 #'
 #' @return Returns the version number of the installed binaries and (if necessary) installs WhiteboxTools in its default location.
 #' @export
@@ -22,11 +21,11 @@
 #' wbtCheck(force = TRUE)
 #'
 
-wbtCheck <- function(force = FALSE, silent_wbt = FALSE) {
+wbtCheck <- function(force = FALSE, silent) {
 
   rlang::check_installed("whitebox", reason = "required to use function drainageBasins") #This is here because whitebox is not a 'depends' of this package; it is only necessary for this function and is therefore in "suggests"
 
-  if (silent_wbt) {
+  if (silent) {
     old_option <- options("whitebox.verbose_mode")
     options("whitebox.verbose_mode" = FALSE)
     if (old_option$whitebox.verbose_mode) {
@@ -47,7 +46,7 @@ wbtCheck <- function(force = FALSE, silent_wbt = FALSE) {
       message("Installing WhiteboxTools version ", substr(version[1], 16, 20), " (force update).")
     } else {
       version <- suppressMessages(whitebox::wbt_version())
-      message("WhiteboxTools is already installed: using version ", substr(version[1], 16, 20), ".")
+      if (!silent) message("WhiteboxTools is already installed: using version ", substr(version[1], 16, 20), ".")
     }
   }
 

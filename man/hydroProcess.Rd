@@ -11,7 +11,8 @@ hydroProcess(
   burn_dist = 10,
   save_path = NULL,
   n.cores = NULL,
-  force_update_wbt = FALSE
+  force_update_wbt = FALSE,
+  silent_wbt = TRUE
 )
 }
 \arguments{
@@ -28,6 +29,8 @@ hydroProcess(
 \item{n.cores}{The maximum number of cores to use. Leave NULL to use all cores minus 1.}
 
 \item{force_update_wbt}{Whitebox Tools is by default only downloaded if it cannot be found on the computer, and no check are performed to ensure the local version is current. Set to TRUE if you know that there is a new version and you would like to use it.}
+
+\item{silent_wbt}{Should Whitebox tools messages be suppressed? This function prints messages to the console already but these messages can be useful if you need to do some debugging.}
 }
 \value{
 A hydro-processed DEM returned as a terra object and saved to disk if \code{save_path} is not null.

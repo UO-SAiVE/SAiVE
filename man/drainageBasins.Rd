@@ -5,24 +5,23 @@
 \title{Watershed/basin delineation}
 \usage{
 drainageBasins(
-  save_path,
   DEM,
   streams = NULL,
   breach_dist = 10000,
   threshold = 500,
   overwrite = FALSE,
+  projection = NULL,
   points = NULL,
   points_name_col = NULL,
-  projection = NULL,
+  save_path = NULL,
   snap = "nearest",
   snap_dist = 200,
+  n.cores = NULL,
   force_update_wbt = FALSE,
-  n.cores = NULL
+  silent_wbt = TRUE
 )
 }
 \arguments{
-\item{save_path}{The directory where you want the output shapefiles saved.}
-
 \item{DEM}{The path to a DEM including extension from which to delineate watersheds/catchments. Must be in .tif format. Derived layers such as flow accumulation, flow direction, and streams will inherit the DEM coordinate reference system.}
 
 \item{streams}{Optionally, the path to the polylines shapefile/geopackage containing lines, which can be used to improve accuracy when using poor quality DEMs. If this shapefile is the only input parameter being modified from previous runs (i.e. you've found a new/better streams shapefile but the DEM is unchanged) then specify a shapefile or geopackage lines file here and overwrite = TRUE.}
@@ -33,19 +32,23 @@ drainageBasins(
 
 \item{overwrite}{If applicable, should rasters present in the same directory as the DEM be overwritten? This will also force the recalculation of derived layers.}
 
+\item{projection}{Optionally, a projection string in the form "epsg:3579" (find them \href{https://epsg.io/}{here}). The derived watersheds and point output layers will use this projection. If NULL the projection of the points will be used.}
+
 \item{points}{The path to the points shapefile (extension .shp) containing the points from which to build watersheds. The attribute of each point will be attached to the newly-created drainage polygons. Leave NULL (along with related parameters) to only process the DEM without defining watersheds.}
 
-\item{points_name_col}{The name of the column in the points shapefile containing names to assign to the watersheds. Duplicates \emph{are} allowed, and are labelled with the suffix _duplicate and a number for duplicates 2+.}
+\item{points_name_col}{The name of the column in the points shapefile containing names to assign to the watersheds. Duplicates \emph{are} allowed, and are labelled with the suffix _duplicate and a number for duplicates 2 +.}
 
-\item{projection}{Optionally, a projection string in the form "epsg:3579" (find them \href{https://epsg.io/}{here}). The derived watersheds and point output layers will use this projection. If NULL the projection of the points will be used.}
+\item{save_path}{The directory where you want the output shapefiles saved.}
 
 \item{snap}{Snap to the "nearest" derived (calculated) stream, or to the "greatest" flow accumulation cell within the snap distance? Beware that "greatest" will move the point downstream by up to the 'snap_dist' specified, while nearest might snap to the wrong stream.}
 
 \item{snap_dist}{The search radius within which to snap points to streams. Snapping method depends on 'snap' parameter. Note that distance units will match the projection, so probably best to work on a meter grid.}
 
+\item{n.cores}{The maximum number of cores to use. Leave NULL to use all cores minus 1.}
+
 \item{force_update_wbt}{Whitebox Tools is by default only downloaded if it cannot be found on the computer, and no check are performed to ensure the local version is current. Set to TRUE if you know that there is a new version and you would like to use it.}
 
-\item{n.cores}{The maximum number of cores to use. Leave NULL to use all cores minus 1.}
+\item{silent_wbt}{Should Whitebox tools messages be suppressed? This function prints messages to the console already but these messages can be useful if you need to do some debugging.}
 }
 \value{
 A list of terra objects. If points are specified: delineated drainages, pour points as provided, snapped pour points, and the derived streams network. If no points: flow accumulation and direction rasters, and the derived streams network. If points specified, also saved to disk: an ESRI shapefile for each drainage basin, plus the associated snapped pour point and the point as provided and a shapefiles for all basins/points together. In all cases the created or discovered rasters will be in the same folder as the DEM.
@@ -55,7 +58,7 @@ A list of terra objects. If points are specified: delineated drainages, pour poi
 
 Hydro-processes a DEM, creating flow accumulation, direction, and streams rasters, and (optionally) delineates watersheds above one or more points using \href{https://www.whiteboxgeo.com/}{Whitebox Tools}. To facilitate this task in areas with poor quality/low resolution DEMs, can "burn-in" a stream network to the DEM to ensure proper stream placement (see details). Many time-consuming raster operations are performed, so the function will attempt to use existing rasters if they are present in the same path as the base DEM and named according to the function's naming conventions. In practice, this means that only the first run of the function needs to be very time consuming. See details for more information.
 
-NOTE 1: This tool can be slow to execute, and will use a lot of memory. Be patient, it might take several hours with a large DEM.
+NOTE 1: This tool can be slow to execute and will use a lot of memory. Be patient, it might take several hours with a large DEM.
 
 NOTE 2: ESRI shapefiles, on which the Whitebox Tools functions depend, truncate column names to 10 characters. You may want to save and re-assign column names to the output terra object after this function has run.
 
@@ -67,7 +70,7 @@ NOTE 4: This function is very memory (RAM) intensive. You'll want at least 16GB 
 This function uses software from the Whitebox geospatial analysis package, built by Prof. John Lindsay. Refer to \href{https://www.whiteboxgeo.com/manual/wbt_book/intro.html}{this link} for more information.
 \subsection{Creating derived raster layers without defining watersheds}{
 
-This function can be run without having any specific point above which to define a watershed. This can come in handy if you need to know where the synthetic streams raster will end up to ensure that your defined watershed pour points do not end up on the wrong stream branch, or if you simply want to front-load work while you work on defining the watershed pour points. To do this, leave the parameter 'points' and associated parameters as \code{NULL}.
+This function can be run without having any specific point above which to define a watershed. This can come in handy if you need to know where the synthetic streams raster will end up to ensure that your defined watershed pour points do not end up on the wrong stream branch, or if you simply want to front-load work while you work on defining the watershed pour points. To do this, leave the parameter \code{points} and associated parameters as \code{NULL}.
 }
 
 \subsection{Explanation of process:}{
