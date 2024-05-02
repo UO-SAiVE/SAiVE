@@ -19,7 +19,7 @@ createStreams(
 
 \item{threshold}{The accumulation threshold in DEM cells necessary to start defining a stream.}
 
-\item{vector}{Output file specifications. NULL for no vector file saved to disk, "gpkg" for a geopackage file, "shp" for a shapefile.}
+\item{vector}{Output file specifications. NULL for no vector file at all; "env" for only a variable returned to the R environment; or, to return to environment and save to disk, "gpkg" for a geopackage file, "shp" for a shapefile.}
 
 \item{save_path}{An optional path in which to save the newly created stream network. If left NULL will save it in the same directory as the provided DEM or, if the DEM is a terra object, return only terra objects.}
 
@@ -38,7 +38,7 @@ A raster representation of streams and, if requested, a vector representation of
 Creates a stream network from a provided DEM. In most cases it is advisable to first hydro-process the DEM (see \code{\link[=hydroProcess]{hydroProcess()}}) to remove depressions which preclude continuous flow from one DEM cell to the next.
 }
 \details{
-This function is essentially a convenient wrapper around three WhiteboxTools geospatial tools: \code{\link[whitebox:wbt_d8_flow_accumulation]{whitebox::wbt_d8_flow_accumulation()}}, \code{\link[whitebox:wbt_d8_pointer]{whitebox::wbt_d8_pointer()}}, and \code{\link[whitebox:wbt_extract_streams]{whitebox::wbt_extract_streams()}}
+This function is essentially a convenient wrapper around three WhiteboxTools geospatial tools (\code{\link[whitebox:wbt_d8_flow_accumulation]{whitebox::wbt_d8_flow_accumulation()}}, \code{\link[whitebox:wbt_d8_pointer]{whitebox::wbt_d8_pointer()}}, and \code{\link[whitebox:wbt_extract_streams]{whitebox::wbt_extract_streams()}}) and some terra functions to convert rasters to vector files.
 }
 \examples{
 \dontshow{if (whitebox::check_whitebox_binary()) (if (getRversion() >= "3.4") withAutoprint else force)(\{ # examplesIf}

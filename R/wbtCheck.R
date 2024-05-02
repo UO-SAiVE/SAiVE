@@ -26,10 +26,14 @@ wbtCheck <- function(force = FALSE, silent) {
   rlang::check_installed("whitebox", reason = "required to use function drainageBasins") #This is here because whitebox is not a 'depends' of this package; it is only necessary for this function and is therefore in "suggests"
 
   if (silent) {
-    old_option <- options("whitebox.verbose_mode")
-    options("whitebox.verbose_mode" = FALSE)
-    if (old_option$whitebox.verbose_mode) {
-      on.exit(options("whitebox.verbose_mode" = TRUE))
+    old_option <- whitebox::wbt_verbose()
+    whitebox::wbt_verbose(FALSE)
+    if (!is.null(old_option)) {
+      if (old_option) {
+        on.exit(options("whitebox.verbose_mode" = TRUE))
+      }
+    } else {
+      on.exit(whitebox::wbt_verbose(TRUE))
     }
   }
 

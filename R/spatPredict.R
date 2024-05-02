@@ -412,7 +412,7 @@ spatPredict <- function(features, outcome, poly_sample = 1000, trainControl, met
       stop(paste0("Failed to run model ", methods, " with the dataset and parameters specified."))
     })
   }
-  results$selected_model <- model
+  results$best_model <- model
   message("Model-specific hyperparameters were adjusted automatically; refer to returned object results$selected_model to see the result.")
 
   #Test the selected model and save statistics

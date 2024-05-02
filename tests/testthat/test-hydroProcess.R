@@ -5,7 +5,7 @@
 test_that("DEM is hydro-processed as expected", {
   if (whitebox::check_whitebox_binary()) {
     res <- hydroProcess(system.file("extdata/basin_rast.tif", package = "SAiVE"), 500, system.file("extdata/streams.gpkg", package = "SAiVE"), 200, n.cores = 2) #These are relatively high values for the size of the DEM, but necessary for reproducibility.
-    expect_snapshot(res, cran=FALSE)
+    expect_snapshot(res, cran = FALSE)
     vdiffr::expect_doppelganger("correct DEM", terra::plot(res))
   }
 })

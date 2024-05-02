@@ -48,17 +48,26 @@
 hydroProcess <- function(DEM, breach_dist, streams = NULL, burn_dist = 10, save_path = NULL, n.cores = NULL, force_update_wbt = FALSE, silent_wbt = TRUE)
 {
 
+  #change terra options to allow greater RAM fraction use
+  old <- terra::terraOptions(print = FALSE)
+  terra::terraOptions(memfrac = 0.9)
+  on.exit(terra::terraOptions(memfrac = old$memfrac), add = TRUE)
+
   if (silent_wbt) {
-    old_option <- options("whitebox.verbose_mode")
-    options("whitebox.verbose_mode" = FALSE)
-    if (old_option$whitebox.verbose_mode) {
-      on.exit(options("whitebox.verbose_mode" = TRUE))
+    old_option <- whitebox::wbt_verbose()
+    whitebox::wbt_verbose(FALSE)
+    if (!is.null(old_option)) {
+      if (old_option) {
+        on.exit(options("whitebox.verbose_mode" = TRUE))
+      }
+    } else {
+      on.exit(whitebox::wbt_verbose(TRUE), add = TRUE)
     }
   }
 
   #initial checks
   rlang::check_installed("whitebox", reason = "required to use function drainageBasins") #This is here because whitebox is not a 'depends' of this package; it is only necessary for this function and is therefore in "suggests"
-  wbtCheck(force = force_update_wbt, silent = TRUE)  #Check whitebox binaries existence and version, install if necessary or if force_update_wbt = TRUE.
+  invisible(utils::capture.output(wbtCheck(force = force_update_wbt, silent = TRUE)))  #Check whitebox binaries existence and version, install if necessary or if force_update_wbt = TRUE.
 
   # Change whitebox max core options to user request
   cores <- parallel::detectCores()
@@ -90,6 +99,7 @@ hydroProcess <- function(DEM, breach_dist, streams = NULL, burn_dist = 10, save_
   }
 
   #Fill single cell pits
+  message("Filling small pits in the DEM...")
   whitebox::wbt_fill_single_cell_pits(dem = dem_path,
                                       output = paste0(temp_dir, "/filled_single_cells.tif"))
   filled_single_cells <- terra::rast(paste0(temp_dir, "/filled_single_cells.tif"))

@@ -1,3 +1,7 @@
+# SAiVE 1.0.6
+### hydroProcess, createStreams, drainageBasins:
+Add option to silence Whitebox tools messages.
+
 # SAiVE 1.0.5
 
 Several minor bugs and sub-optimal behavior were fixed in this release. The most notable changes are:

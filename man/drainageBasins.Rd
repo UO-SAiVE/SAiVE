@@ -16,6 +16,7 @@ drainageBasins(
   save_path = NULL,
   snap = "nearest",
   snap_dist = 200,
+  burn_dist = 10,
   n.cores = NULL,
   force_update_wbt = FALSE,
   silent_wbt = TRUE
@@ -43,6 +44,8 @@ drainageBasins(
 \item{snap}{Snap to the "nearest" derived (calculated) stream, or to the "greatest" flow accumulation cell within the snap distance? Beware that "greatest" will move the point downstream by up to the 'snap_dist' specified, while nearest might snap to the wrong stream.}
 
 \item{snap_dist}{The search radius within which to snap points to streams. Snapping method depends on 'snap' parameter. Note that distance units will match the projection, so probably best to work on a meter grid.}
+
+\item{burn_dist}{If specifying a streams layer polyline layer, the number of DEM units to depress the DEM along the stream trace.}
 
 \item{n.cores}{The maximum number of cores to use. Leave NULL to use all cores minus 1.}
 
