@@ -1,6 +1,8 @@
 # SAiVE 1.0.6
 ### hydroProcess, createStreams, drainageBasins:
 Add option to silence Whitebox tools messages.
+### createStreams
+Add option to not return vector object or file, as terra::as.lines fails on too large a raster. A vector can be created by the user is desired by splitting the raster.
 
 # SAiVE 1.0.5
 
