@@ -7,5 +7,5 @@
 There are no reverse dependencies to check.
 
 ## Note
+This update is very minor and only updates function documentation.
 
-This update addresses several bugs, improves documentation, and improves examples. There are no structural changes to how the package is organized or to how functions operate.

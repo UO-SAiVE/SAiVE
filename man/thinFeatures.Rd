@@ -17,6 +17,8 @@ thinFeatures(data, outcome_col, n.cores = NULL)
 A list of two data.frames: the outcome of the VSURF algorithm and the data after applying the VSURF results (rows removed if applicable)
 }
 \description{
+\ifelse{html}{\href{https://lifecycle.r-lib.org/articles/stages.html#stable}{\figure{lifecycle-stable.svg}{options: alt='[Stable]'}}}{\strong{[Stable]}}
+
 Uses \code{\link[VSURF:VSURF]{VSURF::VSURF()}} to build random forests and remove irrelevant predictor variables from a data.frame containing an outcome variable and 2 or more predictor variables.
 }
 \examples{
@@ -29,4 +31,7 @@ res <- thinFeatures(permafrost, "Type", n.cores = 2)
 
 # Results will vary due to inherent randomness of random forests!
 \dontshow{\}) # examplesIf}
+}
+\author{
+Ghislain de Laplante (gdela069@uottawa.ca or ghislain.delaplante@yukon.ca)
 }

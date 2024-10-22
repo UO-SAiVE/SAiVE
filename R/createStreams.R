@@ -8,8 +8,7 @@
 #' Creates a stream network from a provided DEM. In most cases it is advisable to first hydro-process the DEM (see [hydroProcess()]) to remove depressions which preclude continuous flow from one DEM cell to the next.
 #'
 #' @details
-#' This function is essentially a convenient wrapper around three WhiteboxTools geospatial tools ([whitebox::wbt_d8_flow_accumulation()], [whitebox::wbt_d8_pointer()], and [whitebox::wbt_extract_streams()]) and some terra functions to convert rasters to vector files.
-#'
+#' This function is essentially a convenient wrapper around three WhiteboxTools geospatial tools: [whitebox::wbt_d8_flow_accumulation()], [whitebox::wbt_d8_pointer()], and [whitebox::wbt_extract_streams()]. Terra functions are used to manipulate raster and vector files before and after WhiteboxTools functions are called.
 #'
 #' @param DEM The path to a digital elevation model file with .tif extension, or a terra spatRaster object. It is usually advisable to have already hydro-processed the DEM to remove artificial depressions. See [hydroProcess()].
 #' @param threshold The accumulation threshold in DEM cells necessary to start defining a stream.

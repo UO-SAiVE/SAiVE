@@ -61,23 +61,26 @@ Warning options are changed for this function only to show all warnings as they 
 }
 \details{
 This function partly operates as a convenient means of passing various parameters to the \code{\link[caret:train]{caret::train()}} function, enabling the user to rapidly trial different model types and parameter sets. In addition, pre-processing of data can optionally be done using \code{\link[VSURF:VSURF]{VSURF::VSURF()}} (parameter \code{thinFeatures}) which can decrease the time to run models by removing superfluous parameters.
-}
-\section{Model testing, comparison, and reported metrics}{
-After extracting raster values at \emph{n} points from the \code{features} rasters the point values are split spatially into training and testing sets along a 70/30 split. This is accomplished by creating a grid (1000*1000) of polygons over the extent of the points and randomly assigning polygons to training or testing sets. Points within these polygons are then assigned to the corresponding set, ensuring that the training and testing sets are spatially independent.
+\subsection{Model testing, comparison, and reported metrics}{
+
+After extracting raster values at \emph{n} points from the \code{features} rasters the point values are split spatially into training and testing sets along a 70/30 split. This is accomplished by creating a grid (200*200) of polygons over the extent of the points and randomly assigning polygons to training or testing sets. Points within these polygons are then assigned to the corresponding set, ensuring that the training and testing sets are spatially independent.
 }
 
-\section{Method for selecting the best model:}{
+\subsection{Method for selecting the best model:}{
+
 When specifying multiple model types in\code{methods}, each model type and \code{trainControl} pair (if \code{trainControl} is a list of length equal to \code{methods}) is run using \code{\link[caret:train]{caret::train()}}. To speed things up you can use \code{fastCompare} = TRUE. Models are then compared on their 'accuracy' metric as output by \code{\link[caret:resamples]{caret::resamples()}} when run on the testing partition, and the highest-performing model is selected. If \code{fastCompare} is TRUE, this model is then run on the complete data set provided in \code{outcome}. Model statistics are returned upon function completion, which allows the user to select their own 'best performing' model based on other criteriaif desired.
 }
 
-\section{Balancing classes in outcome (dependent) variable}{
+\subsection{Balancing classes in outcome (dependent) variable}{
+
 Models can be biased if they are given significantly more points in one outcome class vs others, and best practice is to even out the number of points in each class. If extracting point values from a vector or raster object and passing a points vector object to this function, a simple way to do that is by using the "strata" parameter if using \code{\link[terra:sample]{terra::spatSample()}}. If working directly from points, \code{\link[caret:downSample]{caret::downSample()}} and \code{\link[caret:downSample]{caret::upSample()}} can be used. See \href{https://topepo.github.io/caret/subsampling-for-class-imbalances.html}{this link} for more information. Note that if passing a polygons object to this function stratified random sampling will automatically be performed.
 }
 
-\section{Classification or regression}{
+\subsection{Classification or regression}{
+
 Whether this function treats your inputs as a classification or regression problem depends on the class attached to the outcome variable. A class \code{factor} will be treated as a classification problem while all other classes will be treated as regression problems.
 }
-
+}
 \examples{
 \dontshow{if (interactive()) (if (getRversion() >= "3.4") withAutoprint else force)(\{ # examplesIf}
 # These examples can take a while to run!

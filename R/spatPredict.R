@@ -16,16 +16,16 @@
 #' @details
 #' This function partly operates as a convenient means of passing various parameters to the [caret::train()] function, enabling the user to rapidly trial different model types and parameter sets. In addition, pre-processing of data can optionally be done using [VSURF::VSURF()] (parameter `thinFeatures`) which can decrease the time to run models by removing superfluous parameters.
 #'
-#' # Model testing, comparison, and reported metrics
-#' After extracting raster values at *n* points from the `features` rasters the point values are split spatially into training and testing sets along a 70/30 split. This is accomplished by creating a grid (1000*1000) of polygons over the extent of the points and randomly assigning polygons to training or testing sets. Points within these polygons are then assigned to the corresponding set, ensuring that the training and testing sets are spatially independent.
+#' ## Model testing, comparison, and reported metrics
+#' After extracting raster values at *n* points from the `features` rasters the point values are split spatially into training and testing sets along a 70/30 split. This is accomplished by creating a grid (200*200) of polygons over the extent of the points and randomly assigning polygons to training or testing sets. Points within these polygons are then assigned to the corresponding set, ensuring that the training and testing sets are spatially independent.
 #'
-#' # Method for selecting the best model:
+#' ## Method for selecting the best model:
 #' When specifying multiple model types in`methods`, each model type and `trainControl` pair (if `trainControl` is a list of length equal to `methods`) is run using [caret::train()]. To speed things up you can use `fastCompare` = TRUE. Models are then compared on their 'accuracy' metric as output by [caret::resamples()] when run on the testing partition, and the highest-performing model is selected. If `fastCompare` is TRUE, this model is then run on the complete data set provided in `outcome`. Model statistics are returned upon function completion, which allows the user to select their own 'best performing' model based on other criteriaif desired.
 #'
-#' # Balancing classes in outcome (dependent) variable
+#' ## Balancing classes in outcome (dependent) variable
 #' Models can be biased if they are given significantly more points in one outcome class vs others, and best practice is to even out the number of points in each class. If extracting point values from a vector or raster object and passing a points vector object to this function, a simple way to do that is by using the "strata" parameter if using [terra::spatSample()]. If working directly from points, [caret::downSample()] and [caret::upSample()] can be used. See [this link](https://topepo.github.io/caret/subsampling-for-class-imbalances.html) for more information. Note that if passing a polygons object to this function stratified random sampling will automatically be performed.
 #'
-#' # Classification or regression
+#' ## Classification or regression
 #' Whether this function treats your inputs as a classification or regression problem depends on the class attached to the outcome variable. A class `factor` will be treated as a classification problem while all other classes will be treated as regression problems.
 #'
 #'
@@ -41,7 +41,8 @@
 #' @param n.cores The maximum number of cores to use. Leave NULL to use all cores minus 1.
 #' @param save_path The path (folder) to which you wish to save the predicted raster. Not used unless `predict = TRUE`.
 #'
-#' @return If passing only one method to the `method` argument: the outcome of the VSURF variable selection process (if `thinFeatures` is TRUE), the training and testing data.frames, the fitted model, model performance statistics, and the final predicted raster (if `predict` = TRUE).
+#' @return
+#' If passing only one method to the `method` argument: the outcome of the VSURF variable selection process (if `thinFeatures` is TRUE), the training and testing data.frames, the fitted model, model performance statistics, and the final predicted raster (if `predict` = TRUE).
 #'
 #' If passing multiple methods to the `method` argument: the outcome of the VSURF variable selection process (if `thinFeatures` is TRUE), the training and testing data.frames, character vectors for failed methods, methods which generated a warning, and what those errors and warnings were,  model performance comparison (if methods includes more than one method), the selected method, the trained model performance statistics, and the final predicted raster (if `predict` = TRUE).
 #'

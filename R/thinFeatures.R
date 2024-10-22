@@ -1,5 +1,10 @@
 #' Remove irrelevant predictor variables
 #'
+#' @author Ghislain de Laplante (gdela069@uottawa.ca or ghislain.delaplante@yukon.ca)
+#'
+#' @description
+#' `r lifecycle::badge("stable")`
+#'
 #' Uses [VSURF::VSURF()] to build random forests and remove irrelevant predictor variables from a data.frame containing an outcome variable and 2 or more predictor variables.
 #'
 #' @param data A data.frame containing a column for the outcome variable and *n* columns for predictor variables.

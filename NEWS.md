@@ -1,3 +1,6 @@
+# SAiVE 1.0.7
+Changes to some function documentation for clarity and to address issues with headings.
+
 # SAiVE 1.0.6
 Changes to hydrology related functions for ease of use and to address issues with large rasters.
 ### hydroProcess, createStreams, drainageBasins:
